@@ -1,0 +1,7 @@
+pandas
+networkx
+pyvis
+streamlit
+openai
+scikit-learn
+python-dotenv

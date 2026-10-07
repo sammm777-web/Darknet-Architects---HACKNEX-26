@@ -1,0 +1,60 @@
+{
+  "summary": "Coordinated multi-stage insider threat and data exfiltration detected. An unauthorized login from external IP 198.51.100.72 compromised account dchen, harvested proprietary patent archives, escalated privileges via sudo to svc_admin, traversed laterally to critical server SRV-CORE-02, and exfiltrated sensitive vault keys to an unapproved USB mass storage device.",
+  "risk_score": 95,
+  "risk_rationale": "5 linked attack stages (+100); data exfiltration (+20); privilege escalation (+15); lateral movement across hosts (+15); capped at 95",
+  "stages": [
+    {
+      "stage_no": 1,
+      "log_ids": ["LOG-C1-01"],
+      "timestamps": ["2026-10-07T10:01:15Z"],
+      "explanation": "Adversary gained initial access via unusual external login from IP 198.51.100.72 using account dchen onto workstation WS-DEV-01."
+    },
+    {
+      "stage_no": 2,
+      "log_ids": ["LOG-C1-02"],
+      "timestamps": ["2026-10-07T10:04:30Z"],
+      "explanation": "Adversary performed collection by accessing confidential archive confidential_patent_core.tar on WS-DEV-01, a sensitive asset never previously accessed by this user."
+    },
+    {
+      "stage_no": 3,
+      "log_ids": ["LOG-C1-03"],
+      "timestamps": ["2026-10-07T10:11:05Z"],
+      "explanation": "Adversary escalated privileges on host WS-DEV-01 by exploiting sudo configurations to assume privileged identity svc_admin."
+    },
+    {
+      "stage_no": 4,
+      "log_ids": ["LOG-C1-04"],
+      "timestamps": ["2026-10-07T10:18:22Z"],
+      "explanation": "Adversary moved laterally from workstation WS-DEV-01 to core server SRV-CORE-02 using compromised credentials of svc_admin."
+    },
+    {
+      "stage_no": 5,
+      "log_ids": ["LOG-C1-05"],
+      "timestamps": ["2026-10-07T10:25:40Z"],
+      "explanation": "Adversary executed physical/endpoint exfiltration by copying customer vault secrets to unauthorized removable medium USB-SECURE-VAULT on SRV-CORE-02."
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "block_ip",
+      "target": "198.51.100.72",
+      "why": "Block external source IP to neutralize ingress connection and prevent follow-up command-and-control access."
+    },
+    {
+      "action": "revoke_user_token",
+      "target": "dchen",
+      "why": "Invalidate active session tokens and Kerberos tickets for compromised user account dchen."
+    },
+    {
+      "action": "isolate_host",
+      "target": "WS-DEV-01",
+      "why": "Quarantine workstation WS-DEV-01 to sever network connectivity and prevent further lateral expansion."
+    },
+    {
+      "action": "reset_credentials",
+      "target": "svc_admin",
+      "why": "Force immediate password and credential rotation for privileged service account svc_admin."
+    }
+  ],
+  "citations_verified": true
+}

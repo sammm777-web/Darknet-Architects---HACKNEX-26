@@ -1,0 +1,246 @@
+{
+  "nodes": [
+    {
+      "id": "198.51.100.72",
+      "type": "ip",
+      "color": "red",
+      "label": "198.51.100.72 (Attacker IP)",
+      "is_pivot": false,
+      "status": "active"
+    },
+    {
+      "id": "dchen",
+      "type": "user",
+      "color": "red",
+      "label": "dchen",
+      "is_pivot": false,
+      "status": "compromised"
+    },
+    {
+      "id": "WS-DEV-01",
+      "type": "host",
+      "color": "red",
+      "label": "WS-DEV-01 (Pivot Host)",
+      "is_pivot": true,
+      "status": "compromised"
+    },
+    {
+      "id": "10.0.2.45",
+      "type": "ip",
+      "color": "red",
+      "label": "10.0.2.45 (Internal IP)",
+      "is_pivot": false,
+      "status": "compromised"
+    },
+    {
+      "id": "confidential_patent_core.tar",
+      "type": "resource",
+      "color": "blue",
+      "label": "confidential_patent_core.tar",
+      "is_pivot": false,
+      "status": "targeted"
+    },
+    {
+      "id": "svc_admin",
+      "type": "user",
+      "color": "red",
+      "label": "svc_admin",
+      "is_pivot": false,
+      "status": "compromised"
+    },
+    {
+      "id": "SRV-CORE-02",
+      "type": "host",
+      "color": "blue",
+      "label": "SRV-CORE-02 (Target Host)",
+      "is_pivot": false,
+      "status": "targeted"
+    },
+    {
+      "id": "USB-SECURE-VAULT",
+      "type": "resource",
+      "color": "blue",
+      "label": "USB-SECURE-VAULT",
+      "is_pivot": false,
+      "status": "targeted"
+    },
+    {
+      "id": "203.0.113.199",
+      "type": "ip",
+      "color": "gray",
+      "label": "203.0.113.199 (Blocked)",
+      "is_pivot": false,
+      "status": "isolated"
+    },
+    {
+      "id": "readme_setup.md",
+      "type": "resource",
+      "color": "green",
+      "label": "readme_setup.md",
+      "is_pivot": false,
+      "status": "normal"
+    },
+    {
+      "id": "repo_dev_tools",
+      "type": "resource",
+      "color": "green",
+      "label": "repo_dev_tools",
+      "is_pivot": false,
+      "status": "normal"
+    },
+    {
+      "id": "internal_wiki.corp",
+      "type": "resource",
+      "color": "green",
+      "label": "internal_wiki.corp",
+      "is_pivot": false,
+      "status": "normal"
+    },
+    {
+      "id": "build_output.bin",
+      "type": "resource",
+      "color": "green",
+      "label": "build_output.bin",
+      "is_pivot": false,
+      "status": "normal"
+    },
+    {
+      "id": "daily_backup.log",
+      "type": "resource",
+      "color": "green",
+      "label": "daily_backup.log",
+      "is_pivot": false,
+      "status": "normal"
+    },
+    {
+      "id": "metrics_daemon",
+      "type": "resource",
+      "color": "green",
+      "label": "metrics_daemon",
+      "is_pivot": false,
+      "status": "normal"
+    }
+  ],
+  "edges": [
+    {
+      "source": "dchen",
+      "target": "198.51.100.72",
+      "action": "from",
+      "timestamp": "2026-10-07T10:01:15Z",
+      "log_id": "LOG-C1-01",
+      "on_attack_path": true
+    },
+    {
+      "source": "198.51.100.72",
+      "target": "WS-DEV-01",
+      "action": "login",
+      "timestamp": "2026-10-07T10:01:15Z",
+      "log_id": "LOG-C1-01",
+      "on_attack_path": true
+    },
+    {
+      "source": "dchen",
+      "target": "confidential_patent_core.tar",
+      "action": "file_read",
+      "timestamp": "2026-10-07T10:04:30Z",
+      "log_id": "LOG-C1-02",
+      "on_attack_path": true
+    },
+    {
+      "source": "10.0.2.45",
+      "target": "WS-DEV-01",
+      "action": "connect",
+      "timestamp": "2026-10-07T10:04:30Z",
+      "log_id": "LOG-C1-02",
+      "on_attack_path": true
+    },
+    {
+      "source": "dchen",
+      "target": "svc_admin",
+      "action": "privilege_escalation",
+      "timestamp": "2026-10-07T10:11:05Z",
+      "log_id": "LOG-C1-03",
+      "on_attack_path": true
+    },
+    {
+      "source": "svc_admin",
+      "target": "SRV-CORE-02",
+      "action": "lateral_movement",
+      "timestamp": "2026-10-07T10:18:22Z",
+      "log_id": "LOG-C1-04",
+      "on_attack_path": true
+    },
+    {
+      "source": "WS-DEV-01",
+      "target": "SRV-CORE-02",
+      "action": "connect",
+      "timestamp": "2026-10-07T10:18:22Z",
+      "log_id": "LOG-C1-04",
+      "on_attack_path": true
+    },
+    {
+      "source": "svc_admin",
+      "target": "USB-SECURE-VAULT",
+      "action": "usb_copy",
+      "timestamp": "2026-10-07T10:25:40Z",
+      "log_id": "LOG-C1-05",
+      "on_attack_path": true
+    },
+    {
+      "source": "dchen",
+      "target": "readme_setup.md",
+      "action": "file_read",
+      "timestamp": "2026-10-07T10:02:10Z",
+      "log_id": "LOG-BG-01",
+      "on_attack_path": false
+    },
+    {
+      "source": "dchen",
+      "target": "repo_dev_tools",
+      "action": "git_commit",
+      "timestamp": "2026-10-07T10:03:05Z",
+      "log_id": "LOG-BG-02",
+      "on_attack_path": false
+    },
+    {
+      "source": "dchen",
+      "target": "internal_wiki.corp",
+      "action": "http_get",
+      "timestamp": "2026-10-07T10:06:12Z",
+      "log_id": "LOG-BG-03",
+      "on_attack_path": false
+    },
+    {
+      "source": "dchen",
+      "target": "build_output.bin",
+      "action": "compile",
+      "timestamp": "2026-10-07T10:08:44Z",
+      "log_id": "LOG-BG-04",
+      "on_attack_path": false
+    },
+    {
+      "source": "svc_admin",
+      "target": "daily_backup.log",
+      "action": "backup_exec",
+      "timestamp": "2026-10-07T10:20:15Z",
+      "log_id": "LOG-BG-08",
+      "on_attack_path": false
+    },
+    {
+      "source": "svc_admin",
+      "target": "metrics_daemon",
+      "action": "service_ping",
+      "timestamp": "2026-10-07T10:21:40Z",
+      "log_id": "LOG-BG-09",
+      "on_attack_path": false
+    },
+    {
+      "source": "203.0.113.199",
+      "target": "WS-DEV-01",
+      "action": "firewall_drop",
+      "timestamp": "2026-10-07T10:24:10Z",
+      "log_id": "LOG-BG-11",
+      "on_attack_path": false
+    }
+  ]
+}

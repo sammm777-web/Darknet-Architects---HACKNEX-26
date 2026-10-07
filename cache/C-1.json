@@ -1,0 +1,81 @@
+{
+  "summary": "Incident Report for C-1: An adversary campaign comprising 5 correlated attack stages was detected. Assessed Threat Level: HIGH (Risk Score: 100/100). Containment actions required.",
+  "risk_score": 100,
+  "risk_rationale": "5 linked attack stages (+100); data exfiltration (+20); privilege escalation (+15); lateral movement across hosts (+15)",
+  "stages": [
+    {
+      "stage_no": 1,
+      "log_ids": [
+        "LOG-C1-01"
+      ],
+      "timestamps": [
+        "2026-10-07T10:01:15Z"
+      ],
+      "explanation": "Stage 1 (Initial Access): User 'dchen' executed actions from '198.51.100.72' evidenced by log event(s) LOG-C1-01 at 2026-10-07T10:01:15Z."
+    },
+    {
+      "stage_no": 2,
+      "log_ids": [
+        "LOG-C1-02"
+      ],
+      "timestamps": [
+        "2026-10-07T10:04:30Z"
+      ],
+      "explanation": "Stage 2 (Discovery / Collection): User 'dchen' executed actions from '10.0.2.45' evidenced by log event(s) LOG-C1-02 at 2026-10-07T10:04:30Z."
+    },
+    {
+      "stage_no": 3,
+      "log_ids": [
+        "LOG-C1-03"
+      ],
+      "timestamps": [
+        "2026-10-07T10:11:05Z"
+      ],
+      "explanation": "Stage 3 (Privilege Escalation): User 'dchen' executed actions from '10.0.2.45' evidenced by log event(s) LOG-C1-03 at 2026-10-07T10:11:05Z."
+    },
+    {
+      "stage_no": 4,
+      "log_ids": [
+        "LOG-C1-04"
+      ],
+      "timestamps": [
+        "2026-10-07T10:18:22Z"
+      ],
+      "explanation": "Stage 4 (Lateral Movement): User 'svc_admin' executed actions from '10.0.2.45' evidenced by log event(s) LOG-C1-04 at 2026-10-07T10:18:22Z."
+    },
+    {
+      "stage_no": 5,
+      "log_ids": [
+        "LOG-C1-05"
+      ],
+      "timestamps": [
+        "2026-10-07T10:25:40Z"
+      ],
+      "explanation": "Stage 5 (Exfiltration): User 'svc_admin' executed actions from '10.0.2.45' evidenced by log event(s) LOG-C1-05 at 2026-10-07T10:25:40Z."
+    }
+  ],
+  "recommendations": [
+    {
+      "action": "block_ip",
+      "target": "198.51.100.72",
+      "why": "Block ingress and egress network traffic from source IP 198.51.100.72 to halt data exfiltration."
+    },
+    {
+      "action": "revoke_user_token",
+      "target": "dchen",
+      "why": "Revoke active OAuth and Kerberos session tokens for compromised identity dchen."
+    },
+    {
+      "action": "isolate_host",
+      "target": "SRV-CORE-02",
+      "why": "Quarantine endpoint SRV-CORE-02 from the network to prevent further lateral movement."
+    },
+    {
+      "action": "reset_credentials",
+      "target": "dchen",
+      "why": "Enforce immediate credential and password reset for primary compromised account dchen."
+    }
+  ],
+  "citations_verified": true,
+  "source": "ai"
+}
