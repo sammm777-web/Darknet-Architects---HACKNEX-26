@@ -8,6 +8,7 @@ Displays dynamic high-level operational telemetry cards:
 """
 
 from typing import Dict, Any, Optional
+import textwrap
 import streamlit as st
 
 DEFAULT_METRICS: Dict[str, Any] = {
@@ -20,15 +21,6 @@ DEFAULT_METRICS: Dict[str, Any] = {
 def render_metric_cards(metrics: Optional[Dict[str, Any]] = None, **kwargs):
     """
     Renders the 4 standard SOC metric cards in a responsive grid.
-    
-    Parameters:
-    -----------
-    metrics : dict, optional
-        Dictionary containing dynamic metric values:
-        - total_logs: str or int
-        - benign_logs: str or int
-        - attack_chains: str or int
-        - threat_level: str ("CRITICAL", "HIGH", "MEDIUM", "LOW", "ANALYZING")
     """
     if metrics is None:
         metrics = DEFAULT_METRICS
@@ -49,20 +41,20 @@ def render_metric_cards(metrics: Optional[Dict[str, Any]] = None, **kwargs):
         threat_subtext = "Active incident triaged"
     elif threat_level in ["EVALUATING", "ANALYZING", "PENDING"]:
         threat_pill = f'<span class="soc-threat-pill analyzing">{threat_level}</span>'
-        threat_accent = "accent-cyan"
+        threat_accent = "accent-teal"
         threat_subtext = "Detection pipeline queued"
     else:
         threat_pill = '<span class="soc-threat-pill low">LOW</span>'
-        threat_accent = "accent-cyan"
+        threat_accent = "accent-teal"
         threat_subtext = "Baseline within normal limits"
 
-    cards_html = f"""
+    cards_html = textwrap.dedent(f"""
     <div class="soc-section-header">
         <h3 class="soc-section-title">📊 SOC METRICS</h3>
         <span class="soc-section-subtitle">Real-time incident response &amp; log reduction metrics</span>
     </div>
     <div class="soc-metric-grid">
-        <div class="soc-metric-card accent-cyan">
+        <div class="soc-metric-card accent-teal">
             <div class="soc-metric-label">Total Logs Ingested</div>
             <div class="soc-metric-value">{total_logs}</div>
             <div class="soc-metric-subtext">Ingested stream events</div>
@@ -83,5 +75,5 @@ def render_metric_cards(metrics: Optional[Dict[str, Any]] = None, **kwargs):
             <div class="soc-metric-subtext">{threat_subtext}</div>
         </div>
     </div>
-    """
+    """).strip()
     st.markdown(cards_html, unsafe_allow_html=True)

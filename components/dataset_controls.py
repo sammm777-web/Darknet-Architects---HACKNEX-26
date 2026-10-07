@@ -5,6 +5,7 @@ and validation state tracking for the SOC dashboard.
 """
 
 from typing import Dict, Any, Optional
+import textwrap
 import streamlit as st
 from data.demo_scenarios import DEMO_SCENARIOS, get_demo_scenario
 from utils.data_loader import load_dataset
@@ -40,20 +41,20 @@ def render_datasource_controls(
         source_badge = '<span class="soc-source-tag demo">DEMO PRESET</span>'
         log_count_str = active_scenario["metrics"]["total_logs"]
 
-    status_strip_html = f"""
+    status_strip_html = textwrap.dedent(f"""
     <div class="soc-active-source-strip">
         <div class="soc-source-indicator">
-            <span style="color: #38bdf8;">●</span>
-            <span style="color: #94a3b8; font-size: 0.75rem; text-transform: uppercase;">Active Data Source:</span>
-            <span style="color: #ffffff; font-weight: 600;">{source_label}</span>
+            <span style="color: #00E5C7;">●</span>
+            <span style="color: #8A94A6; font-size: 0.75rem; text-transform: uppercase;">Active Data Source:</span>
+            <span style="color: #FFFFFF; font-weight: 600;">{source_label}</span>
             {source_badge}
         </div>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
-            <span style="color: #64748b;">LOGS INGESTED: </span>
-            <span style="color: #38bdf8; font-weight: 700;">{log_count_str}</span>
+            <span style="color: #8A94A6;">LOGS INGESTED: </span>
+            <span style="color: #00E5C7; font-weight: 700;">{log_count_str}</span>
         </div>
     </div>
-    """
+    """).strip()
     st.markdown(status_strip_html, unsafe_allow_html=True)
 
     # 2. Main Data Source Container
@@ -68,7 +69,7 @@ def render_datasource_controls(
 
     # Left Column: Demo Scenarios
     with col_scenarios:
-        st.markdown("<div style='font-size:0.78rem; font-weight:600; color:#cbd5e1; margin-bottom:0.5rem;'>PRELOADED DEMO SCENARIOS</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:0.78rem; font-weight:600; color:#E8ECF1; margin-bottom:0.5rem;'>PRELOADED DEMO SCENARIOS</div>", unsafe_allow_html=True)
         
         btn_col0, btn_col1, btn_col2 = st.columns(3, gap="small")
         
@@ -146,7 +147,7 @@ def render_datasource_controls(
 
     # Right Column: Custom Log Upload
     with col_upload:
-        st.markdown("<div style='font-size:0.78rem; font-weight:600; color:#cbd5e1; margin-bottom:0.5rem;'>UPLOAD CUSTOM LOGS</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:0.78rem; font-weight:600; color:#E8ECF1; margin-bottom:0.5rem;'>UPLOAD CUSTOM LOGS</div>", unsafe_allow_html=True)
         
         uploaded_file = st.file_uploader(
             "Upload log file",
@@ -159,7 +160,6 @@ def render_datasource_controls(
 
         # Process upload if new file provided
         if uploaded_file is not None:
-            # Check if this is a newly uploaded file or previously stored
             current_stored_file = st.session_state.get("uploaded_file_name")
             if current_stored_file != uploaded_file.name:
                 result = load_dataset(uploaded_file)
@@ -178,10 +178,10 @@ def render_datasource_controls(
             st.markdown(f"""
             <div class="soc-upload-status success">
                 <div>
-                    <span style="color: #34d399; font-weight: 600;">✓ Dataset loaded: </span>
-                    <span style="color: #ffffff;">{custom_result['file_name']}</span>
+                    <span style="color: #00E5C7; font-weight: 600;">✓ Dataset loaded: </span>
+                    <span style="color: #FFFFFF;">{custom_result['file_name']}</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #94a3b8;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #8A94A6;">
                     Type: {custom_result['file_type']} | Size: {custom_result['file_size']}
                 </div>
             </div>
@@ -189,7 +189,7 @@ def render_datasource_controls(
         elif custom_result and custom_result.get("status") == "error":
             st.markdown(f"""
             <div class="soc-upload-status error">
-                <div style="color: #f87171; font-weight: 500;">
+                <div style="color: #FF3B5C; font-weight: 500;">
                     ⚠️ {custom_result['error_message']}
                 </div>
             </div>
@@ -197,7 +197,7 @@ def render_datasource_controls(
         else:
             st.markdown("""
             <div class="soc-upload-status">
-                <span style="color: #64748b;">○ No custom dataset active (using demo preset)</span>
-                <span style="font-size: 0.7rem; color: #475569;">Supported: CSV, JSON, LOG, TXT</span>
+                <span style="color: #8A94A6;">○ No custom dataset active (using demo preset)</span>
+                <span style="font-size: 0.7rem; color: #5A6478;">Supported: CSV, JSON, LOG, TXT</span>
             </div>
             """, unsafe_allow_html=True)

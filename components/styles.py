@@ -1,86 +1,100 @@
 """
-SOC Dark Theme & Professional Enterprise Cybersecurity Stylesheet.
-Refined for an authentic, human-designed SOC operations interface.
-Features clean typography, restrained accents, subtle borders, and balanced spacing.
+Enterprise SOC Dark Theme & High-End Cybersecurity Stylesheet.
+Designed for a premium CrowdStrike / Splunk caliber command center interface.
+
+Palette Tokens:
+- Base: Deep Obsidian-Black (#05080E) with subtle carbon micro-texture
+- Surfaces: Obsidian Slate (#090E17, #0D1422, #111A2C)
+- Primary Accent: Electric Teal (#00E5C7)
+- Alert & DEFCON: Crimson-Red (#FF3B5C)
+- Secondary Text: Soft Slate-Gray (#8A94A6)
+- Primary Body Text: Off-White (#E8ECF1)
+- Luminous Borders: 1px subtle glow borders (rgba(0, 229, 199, 0.16) / #162338)
 """
 
 import streamlit as st
 
 SOC_CSS = """
 <style>
-/* Modern Clean Fonts */
+/* Modern Precision Fonts */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-    --soc-bg-base: #070b14;
-    --soc-bg-surface: #0c1322;
-    --soc-bg-card: #0f182b;
-    --soc-bg-card-hover: #132038;
-    --soc-bg-input: #0a0f1d;
+    --soc-bg-base: #05080E;
+    --soc-bg-surface: #090E17;
+    --soc-bg-card: #0D1422;
+    --soc-bg-card-hover: #111A2C;
+    --soc-bg-input: #070C14;
     
-    --soc-border: #1a263d;
-    --soc-border-subtle: #151f33;
-    --soc-border-active: #38bdf8;
+    --soc-border: #162338;
+    --soc-border-subtle: #101928;
+    --soc-border-luminous: rgba(0, 229, 199, 0.22);
+    --soc-border-alert: rgba(255, 59, 92, 0.35);
     
-    --soc-accent-primary: #38bdf8;
-    --soc-accent-blue: #3b82f6;
-    --soc-accent-emerald: #10b981;
-    --soc-accent-amber: #f59e0b;
-    --soc-accent-crimson: #ef4444;
+    --soc-accent-teal: #00E5C7;
+    --soc-accent-teal-dim: rgba(0, 229, 199, 0.12);
+    --soc-accent-crimson: #FF3B5C;
+    --soc-accent-crimson-dim: rgba(255, 59, 92, 0.14);
+    --soc-accent-amber: #F59E0B;
+    --soc-accent-blue: #38BDF8;
     
-    --soc-text-title: #ffffff;
-    --soc-text-primary: #e2e8f0;
-    --soc-text-secondary: #94a3b8;
-    --soc-text-muted: #64748b;
+    --soc-text-title: #FFFFFF;
+    --soc-text-primary: #E8ECF1;
+    --soc-text-secondary: #8A94A6;
+    --soc-text-muted: #5A6478;
     
     --soc-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     --soc-font-mono: 'JetBrains Mono', monospace;
 }
 
-/* Base Body & App Background */
+/* Base Body & Carbon Texture Background */
 .stApp {
     background-color: var(--soc-bg-base);
+    background-image: 
+        radial-gradient(circle at 50% 0%, #0a1324 0%, transparent 60%),
+        radial-gradient(rgba(0, 229, 199, 0.02) 1px, transparent 0);
+    background-size: 100% 100%, 28px 28px;
     font-family: var(--soc-font-sans);
     color: var(--soc-text-primary);
 }
 
-/* Page Layout Container */
+/* Main Container Spacing */
 .main .block-container {
-    padding-top: 1.25rem !important;
+    padding-top: 1.15rem !important;
     padding-bottom: 2.5rem !important;
     max-width: 1440px;
 }
 
-/* Custom Clean Scrollbar */
+/* Sleek Obsidian Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-track {
-    background: #070b14;
+    background: #05080E;
 }
 ::-webkit-scrollbar-thumb {
-    background: #1a263d;
+    background: #162338;
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #38bdf8;
+    background: #00E5C7;
 }
 
 /* ====================================================================
-   HEADER COMPONENT
+   HEADER COMPONENT & DEFCON STATUS
    ==================================================================== */
 .soc-header-container {
-    background: var(--soc-bg-surface);
+    background: linear-gradient(180deg, #0B1220 0%, #080D18 100%);
     border: 1px solid var(--soc-border);
-    border-left: 3px solid var(--soc-accent-primary);
+    border-left: 3px solid var(--soc-accent-teal);
     border-radius: 8px;
     padding: 1.15rem 1.4rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 1px rgba(0, 229, 199, 0.15);
 }
 
 .soc-header-left {
@@ -99,24 +113,25 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 1.4rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    color: #ffffff;
+    letter-spacing: 0.75px;
+    color: #FFFFFF;
     margin: 0;
 }
 
 .soc-header-badge {
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    color: #38bdf8;
+    background: var(--soc-accent-teal-dim);
+    border: 1px solid rgba(0, 229, 199, 0.35);
+    color: var(--soc-accent-teal);
     font-family: var(--soc-font-mono);
     font-size: 0.65rem;
     font-weight: 600;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 4px;
+    letter-spacing: 0.5px;
 }
 
 .soc-header-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--soc-text-secondary);
     margin: 0;
     font-weight: 400;
@@ -125,13 +140,14 @@ SOC_CSS = """
 .soc-header-right {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
+    gap: 0.75rem;
 }
 
-.soc-status-badge {
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #34d399;
+/* DEFCON / System Alert Status with Subtle Crimson Pulse */
+.soc-defcon-badge {
+    background: rgba(255, 59, 92, 0.08);
+    border: 1px solid rgba(255, 59, 92, 0.4);
+    color: #FF3B5C;
     padding: 0.45rem 0.85rem;
     border-radius: 6px;
     font-family: var(--soc-font-mono);
@@ -140,32 +156,57 @@ SOC_CSS = """
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    box-shadow: 0 0 14px rgba(255, 59, 92, 0.18);
 }
 
-.soc-pulse-dot {
+.soc-defcon-badge.online {
+    background: rgba(0, 229, 199, 0.08);
+    border: 1px solid rgba(0, 229, 199, 0.35);
+    color: #00E5C7;
+    box-shadow: 0 0 14px rgba(0, 229, 199, 0.15);
+}
+
+.soc-pulse-dot-red {
     width: 8px;
     height: 8px;
-    background-color: #10b981;
+    background-color: #FF3B5C;
     border-radius: 50%;
     display: inline-block;
-    animation: pulse-dot 2.5s infinite ease-in-out;
+    box-shadow: 0 0 8px #FF3B5C;
+    animation: pulse-red 2s infinite ease-in-out;
 }
 
-@keyframes pulse-dot {
-    0% { opacity: 0.7; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 6px rgba(16, 185, 129, 0.6); }
-    100% { opacity: 0.7; transform: scale(0.9); }
+.soc-pulse-dot-teal {
+    width: 8px;
+    height: 8px;
+    background-color: #00E5C7;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #00E5C7;
+    animation: pulse-teal 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse-red {
+    0% { opacity: 0.6; transform: scale(0.85); box-shadow: 0 0 4px rgba(255, 59, 92, 0.4); }
+    50% { opacity: 1; transform: scale(1.18); box-shadow: 0 0 12px rgba(255, 59, 92, 0.8); }
+    100% { opacity: 0.6; transform: scale(0.85); box-shadow: 0 0 4px rgba(255, 59, 92, 0.4); }
+}
+
+@keyframes pulse-teal {
+    0% { opacity: 0.6; transform: scale(0.9); box-shadow: 0 0 4px rgba(0, 229, 199, 0.4); }
+    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px rgba(0, 229, 199, 0.7); }
+    100% { opacity: 0.6; transform: scale(0.9); box-shadow: 0 0 4px rgba(0, 229, 199, 0.4); }
 }
 
 /* ====================================================================
    DATASET ACTIVE STATUS STRIP
    ==================================================================== */
 .soc-active-source-strip {
-    background: #090e1c;
+    background: #080D16;
     border: 1px solid var(--soc-border);
     border-radius: 6px;
     padding: 0.55rem 1rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -181,13 +222,13 @@ SOC_CSS = """
 
 .soc-source-tag {
     font-family: var(--soc-font-mono);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     padding: 2px 7px;
     border-radius: 4px;
 }
-.soc-source-tag.demo { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.soc-source-tag.custom { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.soc-source-tag.demo { background: rgba(0, 229, 199, 0.12); color: #00E5C7; border: 1px solid rgba(0, 229, 199, 0.3); }
+.soc-source-tag.custom { background: rgba(56, 189, 248, 0.12); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
 
 /* ====================================================================
    SECTION HEADERS
@@ -205,8 +246,8 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 0.82rem;
     font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #e2e8f0;
+    letter-spacing: 0.6px;
+    color: #FFFFFF;
     text-transform: uppercase;
     display: flex;
     align-items: center;
@@ -216,18 +257,18 @@ SOC_CSS = """
 
 .soc-section-subtitle {
     font-size: 0.72rem;
-    color: var(--soc-text-muted);
+    color: var(--soc-text-secondary);
 }
 
 /* ====================================================================
-   DATA SOURCE CONTROL SECTION
+   DATA SOURCE CONTROL SECTION & INGESTION PORT
    ==================================================================== */
 .soc-datasource-container {
     background: var(--soc-bg-surface);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1.15rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.2rem;
 }
 
 .soc-scenario-btn-grid {
@@ -242,7 +283,7 @@ SOC_CSS = """
     border: 1px solid var(--soc-border);
     border-radius: 6px;
     padding: 0.85rem;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: all 0.2s ease;
     cursor: pointer;
     text-align: left;
     height: 100%;
@@ -252,14 +293,14 @@ SOC_CSS = """
 }
 
 .soc-scenario-card:hover {
-    border-color: #2b3b59;
+    border-color: #243550;
     background: var(--soc-bg-card-hover);
 }
 
 .soc-scenario-card.active {
-    border-color: var(--soc-accent-primary);
-    background: #0f1c33;
-    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.3);
+    border: 1px solid var(--soc-accent-teal);
+    background: linear-gradient(145deg, #0D1E2B 0%, #0A1522 100%);
+    box-shadow: 0 0 16px rgba(0, 229, 199, 0.12);
 }
 
 .soc-scenario-title-row {
@@ -273,7 +314,7 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 0.82rem;
     font-weight: 600;
-    color: #ffffff;
+    color: #FFFFFF;
 }
 
 .soc-scenario-badge {
@@ -283,9 +324,9 @@ SOC_CSS = """
     padding: 1px 6px;
     border-radius: 3px;
 }
-.soc-badge-low { background: rgba(16, 185, 129, 0.12); color: #34d399; }
-.soc-badge-high { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
-.soc-badge-critical { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+.soc-badge-low { background: rgba(0, 229, 199, 0.12); color: #00E5C7; border: 1px solid rgba(0, 229, 199, 0.25); }
+.soc-badge-high { background: rgba(245, 158, 11, 0.12); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); }
+.soc-badge-critical { background: var(--soc-accent-crimson-dim); color: #FF3B5C; border: 1px solid rgba(255, 59, 92, 0.3); }
 
 .soc-scenario-desc {
     font-size: 0.74rem;
@@ -293,9 +334,23 @@ SOC_CSS = """
     line-height: 1.35;
 }
 
-/* Upload Status Box */
+/* Ingestion Port Glow */
+div[data-testid="stFileUploader"] section {
+    background: linear-gradient(145deg, #070D18 0%, #050912 100%) !important;
+    border: 1px dashed rgba(0, 229, 199, 0.28) !important;
+    border-radius: 6px !important;
+    padding: 0.75rem !important;
+    box-shadow: inset 0 0 12px rgba(0, 229, 199, 0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+div[data-testid="stFileUploader"] section:hover {
+    border-color: var(--soc-accent-teal) !important;
+    box-shadow: 0 0 16px rgba(0, 229, 199, 0.12);
+}
+
 .soc-upload-status {
-    background: #090e1c;
+    background: #080D16;
     border: 1px solid var(--soc-border-subtle);
     border-radius: 6px;
     padding: 0.65rem 0.85rem;
@@ -307,39 +362,40 @@ SOC_CSS = """
 }
 
 .soc-upload-status.success {
-    border-color: rgba(16, 185, 129, 0.35);
-    background: rgba(16, 185, 129, 0.05);
+    border-color: rgba(0, 229, 199, 0.35);
+    background: rgba(0, 229, 199, 0.06);
 }
 
 .soc-upload-status.error {
-    border-color: rgba(239, 68, 68, 0.35);
-    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(255, 59, 92, 0.35);
+    background: rgba(255, 59, 92, 0.06);
 }
 
 /* ====================================================================
-   METRIC CARDS
+   METRIC CARDS (Luminous 1px Borders)
    ==================================================================== */
 .soc-metric-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 0.9rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.2rem;
 }
 
 .soc-metric-card {
-    background: var(--soc-bg-surface);
+    background: linear-gradient(180deg, #0C1322 0%, #090E18 100%);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1rem 1.15rem;
     position: relative;
-    transition: border-color 0.15s ease;
+    transition: all 0.2s ease;
 }
 
 .soc-metric-card:hover {
-    border-color: #2a3a55;
+    border-color: rgba(0, 229, 199, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(0, 229, 199, 0.08);
 }
 
-.soc-metric-card.accent-cyan { border-top: 2px solid var(--soc-accent-primary); }
+.soc-metric-card.accent-teal { border-top: 2px solid var(--soc-accent-teal); }
 .soc-metric-card.accent-blue { border-top: 2px solid var(--soc-accent-blue); }
 .soc-metric-card.accent-amber { border-top: 2px solid var(--soc-accent-amber); }
 .soc-metric-card.accent-crimson { border-top: 2px solid var(--soc-accent-crimson); }
@@ -350,7 +406,7 @@ SOC_CSS = """
     font-weight: 500;
     color: var(--soc-text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     margin-bottom: 0.4rem;
 }
 
@@ -358,7 +414,7 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 1.65rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #FFFFFF;
     line-height: 1.2;
     margin-bottom: 0.3rem;
 }
@@ -375,45 +431,29 @@ SOC_CSS = """
     font-weight: 700;
     padding: 0.1rem 0.5rem;
     border-radius: 4px;
+    letter-spacing: 0.5px;
 }
-.soc-threat-pill.critical { background: rgba(239, 68, 68, 0.12); color: #f87171; }
-.soc-threat-pill.high { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
-.soc-threat-pill.low { background: rgba(16, 185, 129, 0.12); color: #34d399; }
-.soc-threat-pill.analyzing { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
+.soc-threat-pill.critical { background: var(--soc-accent-crimson-dim); color: #FF3B5C; border: 1px solid rgba(255, 59, 92, 0.3); box-shadow: 0 0 8px rgba(255, 59, 92, 0.2); }
+.soc-threat-pill.high { background: rgba(245, 158, 11, 0.12); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); }
+.soc-threat-pill.low { background: var(--soc-accent-teal-dim); color: #00E5C7; border: 1px solid rgba(0, 229, 199, 0.25); }
+.soc-threat-pill.analyzing { background: rgba(56, 189, 248, 0.12); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.25); }
 
 /* ====================================================================
-   ATTACK GRAPH WORKSPACE CONTAINER & ENTITY INSPECTOR
+   ATTACK GRAPH WORKSPACE & CONTROLS STRIP
    ==================================================================== */
 .soc-graph-container {
     background: var(--soc-bg-surface);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1.15rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.2rem;
     min-height: 460px;
     display: flex;
     flex-direction: column;
 }
 
-.soc-graph-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #090e1c;
-    border: 1px solid var(--soc-border-subtle);
-    border-radius: 6px;
-    padding: 0.45rem 0.8rem;
-    margin-bottom: 0.85rem;
-}
-
-.soc-toolbar-info {
-    font-family: var(--soc-font-mono);
-    font-size: 0.72rem;
-    color: var(--soc-text-secondary);
-}
-
 .soc-graph-controls-strip {
-    background: #090e1c;
+    background: #080D16;
     border: 1px solid var(--soc-border);
     border-radius: 6px;
     padding: 0.6rem 0.85rem;
@@ -422,7 +462,7 @@ SOC_CSS = """
 
 /* Entity Inspector Panel */
 .soc-entity-panel {
-    background: var(--soc-bg-surface);
+    background: linear-gradient(180deg, #0C1322 0%, #090E18 100%);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1.1rem;
@@ -445,7 +485,7 @@ SOC_CSS = """
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    color: #ffffff;
+    color: #FFFFFF;
     text-transform: uppercase;
 }
 
@@ -455,7 +495,7 @@ SOC_CSS = """
     color: var(--soc-text-muted);
     font-family: var(--soc-font-mono);
     font-size: 0.82rem;
-    background: #080c16;
+    background: #070B14;
     border: 1px dashed var(--soc-border);
     border-radius: 6px;
     display: flex;
@@ -472,7 +512,7 @@ SOC_CSS = """
 }
 
 .soc-entity-cell {
-    background: #090e1c;
+    background: #070B14;
     border: 1px solid var(--soc-border-subtle);
     border-radius: 6px;
     padding: 0.55rem 0.75rem;
@@ -490,12 +530,12 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 0.82rem;
     font-weight: 600;
-    color: #ffffff;
+    color: #FFFFFF;
     word-break: break-all;
 }
 
 .soc-legend-panel {
-    background: var(--soc-bg-surface);
+    background: linear-gradient(180deg, #0C1322 0%, #090E18 100%);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1.1rem;
@@ -516,7 +556,7 @@ SOC_CSS = """
     font-family: var(--soc-font-mono);
     font-size: 0.72rem;
     color: var(--soc-text-primary);
-    background: #090e1c;
+    background: #070B14;
     border: 1px solid var(--soc-border-subtle);
     border-radius: 4px;
     padding: 0.4rem 0.6rem;
@@ -546,7 +586,7 @@ SOC_CSS = """
 }
 
 .soc-info-card {
-    background: var(--soc-bg-surface);
+    background: linear-gradient(180deg, #0C1322 0%, #090E18 100%);
     border: 1px solid var(--soc-border);
     border-radius: 8px;
     padding: 1rem 1.15rem;
@@ -569,7 +609,7 @@ SOC_CSS = """
     justify-content: space-between;
     font-size: 0.78rem;
     padding: 0.3rem 0;
-    border-bottom: 1px solid rgba(21, 31, 51, 0.6);
+    border-bottom: 1px solid rgba(16, 25, 40, 0.8);
 }
 
 .soc-info-row:last-child {
@@ -589,36 +629,51 @@ SOC_CSS = """
     font-size: 0.73rem;
 }
 
-/* Streamlit Native Elements Clean Integration */
+/* ====================================================================
+   STREAMLIT WIDGETS & BUTTONS (Electric Teal Glow)
+   ==================================================================== */
 div.stButton > button {
-    background-color: var(--soc-bg-card);
-    border: 1px solid var(--soc-border);
-    color: #e2e8f0;
+    background: linear-gradient(145deg, #0E1626 0%, #090F1B 100%);
+    border: 1px solid #1A283F;
+    color: #E8ECF1;
     font-family: var(--soc-font-mono);
     font-size: 0.78rem;
     font-weight: 500;
     padding: 0.5rem 0.9rem;
     border-radius: 6px;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     width: 100%;
 }
 
 div.stButton > button:hover {
-    border-color: var(--soc-accent-primary);
-    background-color: var(--soc-bg-card-hover);
-    color: #ffffff;
+    border-color: var(--soc-accent-teal);
+    background: linear-gradient(145deg, #132238 0%, #0E1A2C 100%);
+    color: #FFFFFF;
+    box-shadow: 0 0 14px rgba(0, 229, 199, 0.18);
 }
 
 div.stButton > button:active, div.stButton > button:focus {
-    border-color: var(--soc-accent-primary);
-    box-shadow: 0 0 0 1px var(--soc-accent-primary);
+    border-color: var(--soc-accent-teal);
+    box-shadow: 0 0 0 1px var(--soc-accent-teal), 0 0 16px rgba(0, 229, 199, 0.25);
 }
 
-div[data-testid="stFileUploader"] section {
-    background: #090e1c !important;
-    border: 1px dashed var(--soc-border) !important;
-    border-radius: 6px !important;
-    padding: 0.65rem !important;
+/* Inputs & Dropdowns */
+div[data-baseweb="select"] {
+    background-color: #070B14 !important;
+}
+
+div[data-baseweb="select"] > div {
+    background-color: #070B14 !important;
+    border-color: #162338 !important;
+    color: #E8ECF1 !important;
+    font-family: var(--soc-font-mono) !important;
+    font-size: 0.78rem !important;
+}
+
+/* Checkboxes */
+span[data-baseweb="checkbox"] span {
+    background-color: #070B14 !important;
+    border-color: #162338 !important;
 }
 
 /* Responsive constraints */

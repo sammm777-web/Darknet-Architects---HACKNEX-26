@@ -1,17 +1,25 @@
 """
-Interactive Attack Graph Component for SOC Command Center.
-Uses PyVis (with vis.js WebGL/Canvas) and NetworkX to generate
-an interactive force-directed attack path and network topology graph.
+Structured Hierarchical Attack-Path Graph Component for SOC Command Center.
+Renders an enterprise hierarchical tree / attack-flow visualization with:
+- Centered root nodes and structured multi-level branches (Level 0 -> Level 1 -> Level 2...)
+- Rounded card nodes with entity icons, names, and category badges
+- Clean curved arrows with protocol labels (SMB_CONNECT, AUTH_TGS, LOGON, etc.)
+- Left-side compact legend (Node Types & Relationship Types)
+- Active attack-path emphasis with crimson highlighting
+- Full node inspection telemetry and top-level filter/highlight/reset controls
 
-Provides:
-1. Responsive PyVis canvas with physics stabilization, pan, zoom, drag
-2. Graph controls (Reset View, Show/Hide Labels, Entity Type Filter, Highlight Attack Path)
-3. Node inspection & selected entity information card
-4. Comprehensive SOC graph legend & attack chain summary
-5. Attack-path visual highlighting (adversary kill-chain vs benign traffic)
+Visual Theme:
+- Background: #0C0C0E / #05080E
+- Primary text: #F5F2ED
+- Secondary text: #9A968F
+- Threat / Alerts: #E63946 (#7A1F2B)
+- Hosts / Devices: #00E5C7
+- Users: #F59E0B
+- Files: #8A94A6
 """
 
 import json
+import textwrap
 from typing import Dict, Any, Optional, List, Tuple
 import streamlit as st
 import streamlit.components.v1 as components
@@ -30,160 +38,86 @@ except ImportError:
 
 
 # -------------------------------------------------------------------------
-# Node Styling Configuration by Category
+# Node Taxonomy Configuration
 # -------------------------------------------------------------------------
-NODE_TYPE_STYLES: Dict[str, Dict[str, Any]] = {
+ENTITY_TAXONOMY: Dict[str, Dict[str, Any]] = {
     "ATTACKER": {
-        "color": {
-            "background": "#ef4444",
-            "border": "#b91c1c",
-            "highlight": {"background": "#f87171", "border": "#dc2626"},
-            "hover": {"background": "#dc2626", "border": "#991b1b"}
-        },
-        "shape": "diamond",
-        "size": 28,
-        "font": {"color": "#ffffff", "size": 13, "face": "Inter, monospace", "bold": True}
+        "color": "#E63946",
+        "bg": "rgba(230, 57, 70, 0.14)",
+        "border": "#E63946",
+        "icon": "⚔️",
+        "label": "ATTACK / CRITICAL TARGET"
     },
-    "IP": {
-        "color": {
-            "background": "#38bdf8",
-            "border": "#0284c7",
-            "highlight": {"background": "#7dd3fc", "border": "#0369a1"},
-            "hover": {"background": "#0ea5e9", "border": "#075985"}
-        },
-        "shape": "dot",
-        "size": 22,
-        "font": {"color": "#e2e8f0", "size": 12, "face": "Inter, monospace"}
-    },
-    "USER": {
-        "color": {
-            "background": "#a855f7",
-            "border": "#7e22ce",
-            "highlight": {"background": "#c084fc", "border": "#6b21a8"},
-            "hover": {"background": "#9333ea", "border": "#581c87"}
-        },
-        "shape": "ellipse",
-        "size": 24,
-        "font": {"color": "#ffffff", "size": 12, "face": "Inter, monospace"}
-    },
-    "DEVICE": {
-        "color": {
-            "background": "#3b82f6",
-            "border": "#1d4ed8",
-            "highlight": {"background": "#60a5fa", "border": "#1e40af"},
-            "hover": {"background": "#2563eb", "border": "#172554"}
-        },
-        "shape": "box",
-        "size": 24,
-        "font": {"color": "#ffffff", "size": 12, "face": "Inter, monospace"}
+    "TARGET": {
+        "color": "#E63946",
+        "bg": "rgba(230, 57, 70, 0.14)",
+        "border": "#E63946",
+        "icon": "🎯",
+        "label": "ATTACK / CRITICAL TARGET"
     },
     "SERVER": {
-        "color": {
-            "background": "#10b981",
-            "border": "#047857",
-            "highlight": {"background": "#34d399", "border": "#065f46"},
-            "hover": {"background": "#059669", "border": "#022c22"}
-        },
-        "shape": "database",
-        "size": 26,
-        "font": {"color": "#ffffff", "size": 12, "face": "Inter, monospace"}
+        "color": "#00E5C7",
+        "bg": "rgba(0, 229, 199, 0.10)",
+        "border": "#00E5C7",
+        "icon": "🖧",
+        "label": "HOST / SERVER"
+    },
+    "DEVICE": {
+        "color": "#00E5C7",
+        "bg": "rgba(0, 229, 199, 0.10)",
+        "border": "#00E5C7",
+        "icon": "💻",
+        "label": "HOST / DEVICE"
+    },
+    "IP": {
+        "color": "#00E5C7",
+        "bg": "rgba(0, 229, 199, 0.10)",
+        "border": "#00E5C7",
+        "icon": "🌐",
+        "label": "HOST / IP"
+    },
+    "USER": {
+        "color": "#F59E0B",
+        "bg": "rgba(245, 158, 11, 0.12)",
+        "border": "#F59E0B",
+        "icon": "👤",
+        "label": "USER"
     },
     "FILE": {
-        "color": {
-            "background": "#f59e0b",
-            "border": "#b45309",
-            "highlight": {"background": "#fbbf24", "border": "#92400e"},
-            "hover": {"background": "#d97706", "border": "#78350f"}
-        },
-        "shape": "box",
-        "size": 20,
-        "font": {"color": "#ffffff", "size": 11, "face": "Inter, monospace"}
+        "color": "#8A94A6",
+        "bg": "rgba(138, 148, 166, 0.10)",
+        "border": "#8A94A6",
+        "icon": "📄",
+        "label": "FILE"
     },
     "USB DEVICE": {
-        "color": {
-            "background": "#eab308",
-            "border": "#a16207",
-            "highlight": {"background": "#fde047", "border": "#854d0e"},
-            "hover": {"background": "#ca8a04", "border": "#713f12"}
-        },
-        "shape": "triangle",
-        "size": 24,
-        "font": {"color": "#ffffff", "size": 12, "face": "Inter, monospace"}
+        "color": "#FBBF24",
+        "bg": "rgba(251, 191, 36, 0.12)",
+        "border": "#FBBF24",
+        "icon": "🔌",
+        "label": "REMOVABLE MEDIA"
     },
     "USB": {
-        "color": {
-            "background": "#eab308",
-            "border": "#a16207",
-            "highlight": {"background": "#fde047", "border": "#854d0e"},
-            "hover": {"background": "#ca8a04", "border": "#713f12"}
-        },
-        "shape": "triangle",
-        "size": 24,
-        "font": {"color": "#ffffff", "size": 12, "face": "Inter, monospace"}
+        "color": "#FBBF24",
+        "bg": "rgba(251, 191, 36, 0.12)",
+        "border": "#FBBF24",
+        "icon": "🔌",
+        "label": "REMOVABLE MEDIA"
     }
 }
 
-DEFAULT_NODE_STYLE = {
-    "color": {
-        "background": "#64748b",
-        "border": "#334155",
-        "highlight": {"background": "#94a3b8", "border": "#475569"},
-        "hover": {"background": "#475569", "border": "#1e293b"}
-    },
-    "shape": "dot",
-    "size": 20,
-    "font": {"color": "#e2e8f0", "size": 12, "face": "Inter, monospace"}
-}
-
-# -------------------------------------------------------------------------
-# Edge Styling Configuration
-# -------------------------------------------------------------------------
-EDGE_STATUS_COLORS: Dict[str, Dict[str, Any]] = {
-    "ATTACK": {
-        "color": "#ef4444",
-        "highlight": "#f87171",
-        "hover": "#dc2626",
-        "width": 3.2,
-        "dashes": False
-    },
-    "LATERAL MOVEMENT": {
-        "color": "#f87171",
-        "highlight": "#fca5a5",
-        "hover": "#ef4444",
-        "width": 3.2,
-        "dashes": False
-    },
-    "EXFILTRATION": {
-        "color": "#ec4899",
-        "highlight": "#f472b6",
-        "hover": "#db2777",
-        "width": 3.2,
-        "dashes": True
-    },
-    "SUSPICIOUS": {
-        "color": "#f59e0b",
-        "highlight": "#fbbf24",
-        "hover": "#d97706",
-        "width": 2.2,
-        "dashes": True
-    },
-    "BENIGN": {
-        "color": "#38bdf8",
-        "highlight": "#7dd3fc",
-        "hover": "#0ea5e9",
-        "width": 1.4,
-        "dashes": False
-    },
-    "NORMAL": {
-        "color": "#64748b",
-        "highlight": "#94a3b8",
-        "hover": "#475569",
-        "width": 1.4,
-        "dashes": False
-    }
+DEFAULT_TAXONOMY = {
+    "color": "#8A94A6",
+    "bg": "rgba(138, 148, 166, 0.10)",
+    "border": "#162338",
+    "icon": "📦",
+    "label": "ENTITY"
 }
 
 
+# -------------------------------------------------------------------------
+# PyVis Network Compatibility Wrapper (Preserved for unit test suites)
+# -------------------------------------------------------------------------
 def create_pyvis_network(
     nodes: List[Dict[str, Any]],
     edges: List[Dict[str, Any]],
@@ -191,174 +125,473 @@ def create_pyvis_network(
     show_labels: bool = True,
     highlight_attack: bool = False,
     height: int = 500
-) -> Network:
+) -> Any:
     """
-    Builds a styled PyVis Network instance from filtered nodes and edges.
+    Builds a PyVis network instance for backward-compatibility.
     """
+    if not PYVIS_AVAILABLE:
+        class DummyNet:
+            def generate_html(self):
+                return "<div id='mynetwork'>PyVis not installed</div>"
+        return DummyNet()
+
     net = Network(
         height=f"{height}px",
         width="100%",
-        bgcolor="#070b14",
-        font_color="#e2e8f0",
+        bgcolor="#05080E",
+        font_color="#F5F2ED",
         directed=True
     )
-
-    # 1. Add Nodes
     for node in nodes:
         node_id = str(node.get("id", ""))
         raw_label = str(node.get("label", node_id))
         category = str(node.get("type", "DEVICE")).upper()
-        status = str(node.get("status", "SAFE")).upper()
-        risk = str(node.get("risk", "LOW")).upper()
-
-        style = NODE_TYPE_STYLES.get(category, DEFAULT_NODE_STYLE).copy()
-        node_color = style["color"].copy()
-        node_size = style["size"]
-
-        # If node is compromised / malicious
-        if status in ["COMPROMISED", "TARGET"] and category not in ["ATTACKER"]:
-            node_color["border"] = "#f87171"
-            if highlight_attack:
-                node_color["background"] = "#991b1b"
-        elif status == "MALICIOUS":
-            node_color["background"] = "#ef4444"
-            node_color["border"] = "#b91c1c"
-
-        # If this is the actively selected node in inspector
-        if selected_node_id and node_id == selected_node_id:
-            node_size = int(node_size * 1.35)
-            node_color["border"] = "#38bdf8"
-            node_color["background"] = "#0284c7" if category != "ATTACKER" else "#dc2626"
-
-        # Node label toggle
-        display_label = raw_label if show_labels else " "
-
-        # Construct informative tooltip
-        tooltip_lines = [
-            f"<b>{raw_label}</b>",
-            f"Type: {category}",
-            f"Status: {status}",
-            f"Risk: {risk}"
-        ]
-        for k, v in node.items():
-            if k not in ["id", "label", "type", "status", "risk"]:
-                tooltip_lines.append(f"{k.capitalize()}: {v}")
-        title_html = "<br>".join(tooltip_lines)
-
+        tax = ENTITY_TAXONOMY.get(category, DEFAULT_TAXONOMY)
         net.add_node(
             n_id=node_id,
-            label=display_label,
-            title=title_html,
-            shape=style["shape"],
-            size=node_size,
-            color=node_color,
-            font=style["font"]
+            label=raw_label if show_labels else " ",
+            shape="box",
+            color={"background": "#0D1422", "border": tax["color"]}
         )
-
-    # 2. Add Edges
     for edge in edges:
         source = str(edge.get("source", edge.get("from", "")))
         target = str(edge.get("target", edge.get("to", "")))
-        edge_label = str(edge.get("label", ""))
-        edge_type = str(edge.get("type", "ACCESS")).upper()
-        edge_status = str(edge.get("status", "NORMAL")).upper()
-
-        edge_style = EDGE_STATUS_COLORS.get(edge_status, EDGE_STATUS_COLORS.get(edge_type, EDGE_STATUS_COLORS["NORMAL"]))
-
-        edge_color = edge_style["color"]
-        edge_width = edge_style["width"]
-        edge_dashes = edge_style["dashes"]
-
-        # Attack path emphasis
-        is_attack_edge = edge_status in ["ATTACK", "LATERAL MOVEMENT", "EXFILTRATION"] or edge_type in ["LATERAL MOVEMENT", "EXFILTRATION"]
-
-        if highlight_attack:
-            if is_attack_edge:
-                edge_color = "#ef4444"
-                edge_width = 3.6
-            else:
-                edge_color = "#1e293b"
-                edge_width = 1.0
-
-        edge_color_dict = {
-            "color": edge_color,
-            "highlight": "#f87171" if is_attack_edge else "#38bdf8",
-            "hover": "#dc2626" if is_attack_edge else "#0ea5e9"
-        }
-
-        display_edge_label = edge_label if show_labels else ""
-
-        net.add_edge(
-            source=source,
-            to=target,
-            label=display_edge_label,
-            title=f"Relationship: {edge_type}<br>Detail: {edge_label}<br>Status: {edge_status}",
-            color=edge_color_dict,
-            width=edge_width,
-            dashes=edge_dashes,
-            arrows={"to": {"enabled": True, "scaleFactor": 0.8}}
-        )
-
-    # Physics and interaction configuration
-    options = {
-        "nodes": {
-            "borderWidth": 2,
-            "shadow": {"enabled": True, "color": "rgba(0,0,0,0.5)", "size": 6, "x": 2, "y": 2}
-        },
-        "edges": {
-            "smooth": {"type": "continuous", "roundness": 0.25},
-            "font": {
-                "size": 11,
-                "face": "JetBrains Mono, monospace",
-                "color": "#94a3b8",
-                "strokeWidth": 2,
-                "strokeColor": "#070b14",
-                "align": "horizontal"
-            }
-        },
-        "physics": {
-            "forceAtlas2Based": {
-                "gravitationalConstant": -55,
-                "centralGravity": 0.015,
-                "springLength": 120,
-                "springConstant": 0.08,
-                "damping": 0.4
-            },
-            "solver": "forceAtlas2Based",
-            "stabilization": {"iterations": 150}
-        },
-        "interaction": {
-            "hover": True,
-            "zoomView": True,
-            "dragView": True,
-            "dragNodes": True,
-            "navigationButtons": False,
-            "tooltipDelay": 100
-        }
-    }
-
-    net.set_options(json.dumps(options))
+        label = str(edge.get("label", ""))
+        net.add_edge(source=source, to=target, label=label if show_labels else "")
     return net
 
 
-import textwrap
+# -------------------------------------------------------------------------
+# Hierarchical Layout Geometry & Node Positioning Algorithm
+# -------------------------------------------------------------------------
+def compute_hierarchical_positions(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    scenario_id: str = "clean_logs",
+    canvas_w: int = 880,
+    canvas_h: int = 420
+) -> Dict[str, Tuple[int, int]]:
+    """
+    Computes deterministic, structured (x, y) coordinates for nodes in a clean
+    hierarchical attack-path tree layout.
+    """
+    node_ids = [str(n.get("id", "")) for n in nodes]
+    positions: Dict[str, Tuple[int, int]] = {}
 
+    # 1. Clean Logs Scenario (Exact structured hierarchy specified in requirements)
+    # Hierarchy:
+    #                   Domain Controller (dc-01)
+    #                   /                       \
+    #          File Server (file-srv)          WS-ALPHA (wkst-01)
+    #               |                                   |
+    #   Quarterly_Budget.xlsx (doc-budget)       alice (usr-alice)
+    clean_log_ids = {"dc-01", "file-srv", "wkst-01", "usr-alice", "doc-budget"}
+    if clean_log_ids.issubset(set(node_ids)) or scenario_id == "clean_logs":
+        positions["dc-01"] = (440, 58)
+        positions["file-srv"] = (230, 195)
+        positions["wkst-01"] = (650, 195)
+        positions["doc-budget"] = (230, 345)
+        positions["usr-alice"] = (650, 345)
+        return positions
+
+    # 2. USB Exfiltration Scenario (Top-to-bottom structured attack path)
+    if scenario_id == "usb_exfiltration" or "usb-042" in node_ids:
+        order = ["usr-john", "wkst-042", "doc-sensitive", "usb-042", "ext-drop"]
+        y_coords = [48, 132, 218, 304, 390]
+        for i, n_id in enumerate(order):
+            if n_id in node_ids:
+                positions[n_id] = (440, y_coords[i])
+        return positions
+
+    # 3. Lateral Movement Scenario (Multi-stage lateral pivot tree)
+    if scenario_id == "lateral_movement" or "attacker-c2" in node_ids:
+        # Structured 2-column or 3-level pivot tree
+        positions["attacker-c2"] = (160, 65)
+        positions["wkst-compromised"] = (440, 65)
+        positions["usr-compromised"] = (720, 65)
+        positions["srv-internal"] = (720, 245)
+        positions["wkst-second"] = (440, 245)
+        positions["dc-crown-jewel"] = (160, 245)
+        return positions
+
+    # 4. General Topological / Level-Based Hierarchical Layout for Custom Datasets
+    if NETWORKX_AVAILABLE:
+        G = nx.DiGraph()
+        for n in nodes:
+            G.add_node(str(n.get("id", "")))
+        for e in edges:
+            G.add_edge(str(e.get("source", "")), str(e.get("target", "")))
+        
+        # Calculate levels from in-degree 0 roots
+        levels: Dict[str, int] = {}
+        roots = [n for n in G.nodes if G.in_degree(n) == 0]
+        if not roots and G.nodes:
+            roots = [list(G.nodes)[0]]
+        
+        for root in roots:
+            levels[root] = 0
+            for target, length in nx.single_source_shortest_path_length(G, root).items():
+                levels[target] = max(levels.get(target, 0), length)
+        
+        # Assign unreached nodes to level 0
+        for n in G.nodes:
+            if n not in levels:
+                levels[n] = 0
+
+        # Group nodes by level
+        level_groups: Dict[int, List[str]] = {}
+        for n_id, lvl in levels.items():
+            level_groups.setdefault(lvl, []).append(n_id)
+
+        max_lvl = max(level_groups.keys()) if level_groups else 0
+        lvl_spacing = (canvas_h - 100) / max(1, max_lvl)
+
+        for lvl, group in level_groups.items():
+            y = int(55 + lvl * lvl_spacing)
+            count = len(group)
+            for idx, n_id in enumerate(group):
+                x = int(canvas_w * (idx + 1) / (count + 1))
+                positions[n_id] = (x, y)
+        return positions
+
+    # Fallback: simple evenly-spaced layout
+    count = len(nodes)
+    for i, n in enumerate(nodes):
+        positions[str(n.get("id", ""))] = (
+            int(canvas_w * (i + 1) / (count + 1)),
+            int(canvas_h / 2)
+        )
+    return positions
+
+
+# -------------------------------------------------------------------------
+# Clean Protocol Label Extractor
+# -------------------------------------------------------------------------
+def extract_clean_protocol(label: str, edge_type: str) -> str:
+    """
+    Extracts a concise, professional protocol label (e.g. SMB_CONNECT, AUTH_TGS, LOGON).
+    """
+    if not label:
+        return edge_type
+    
+    clean = label.split("(")[0].strip()
+    clean = clean.replace("FILE READ", "FILE_READ").replace("FILE ACCESS", "FILE_ACCESS")
+    clean = clean.replace("LOGIN", "LOGON")
+    return clean
+
+
+# -------------------------------------------------------------------------
+# Hierarchical SVG / HTML5 Attack Graph Generator
+# -------------------------------------------------------------------------
+def generate_hierarchical_graph_html(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    selected_node_id: Optional[str] = None,
+    show_labels: bool = True,
+    highlight_attack: bool = False,
+    scenario_id: str = "clean_logs",
+    height: int = 480
+) -> str:
+    """
+    Generates a high-contrast, structured hierarchical attack graph visualization.
+    Renders rounded card nodes, curved Bézier connection paths, protocol labels,
+    and active attack-path emphasis.
+    """
+    canvas_w = 880
+    canvas_h = max(400, height - 40)
+    
+    # Compute deterministic hierarchical positions
+    positions = compute_hierarchical_positions(
+        nodes=nodes,
+        edges=edges,
+        scenario_id=scenario_id,
+        canvas_w=canvas_w,
+        canvas_h=canvas_h
+    )
+
+    card_w = 175
+    card_h = 54
+
+    # Build Edge SVG Elements
+    edges_svg = []
+    for edge in edges:
+        s_id = str(edge.get("source", edge.get("from", "")))
+        t_id = str(edge.get("target", edge.get("to", "")))
+
+        if s_id not in positions or t_id not in positions:
+            continue
+
+        x1, y1 = positions[s_id]
+        x2, y2 = positions[t_id]
+        raw_label = str(edge.get("label", ""))
+        edge_type = str(edge.get("type", "ACCESS")).upper()
+        edge_status = str(edge.get("status", "NORMAL")).upper()
+
+        protocol = extract_clean_protocol(raw_label, edge_type)
+
+        # Severity & Attack Path Classification
+        is_attack_edge = (
+            edge_status in ["ATTACK", "LATERAL MOVEMENT", "EXFILTRATION"] or
+            edge_type in ["LATERAL MOVEMENT", "EXFILTRATION"]
+        )
+        is_suspicious_edge = edge_status in ["SUSPICIOUS"]
+
+        # Default Edge Styles
+        if is_attack_edge:
+            stroke_color = "#E63946"
+            stroke_width = 2.8
+            dash_array = "none"
+            marker_id = "arrow-attack"
+            label_text_color = "#E63946"
+            label_bg_border = "#E63946"
+        elif is_suspicious_edge:
+            stroke_color = "#F59E0B"
+            stroke_width = 2.0
+            dash_array = "5,4"
+            marker_id = "arrow-suspicious"
+            label_text_color = "#F59E0B"
+            label_bg_border = "#F59E0B"
+        else:
+            stroke_color = "#00E5C7" if edge_status == "BENIGN" else "#8A94A6"
+            stroke_width = 1.4
+            dash_array = "none"
+            marker_id = "arrow-normal" if edge_status == "BENIGN" else "arrow-muted"
+            label_text_color = "#9A968F"
+            label_bg_border = "#162338"
+
+        edge_opacity = 1.0
+        if highlight_attack:
+            if is_attack_edge:
+                stroke_color = "#E63946"
+                stroke_width = 3.2
+                edge_opacity = 1.0
+                marker_id = "arrow-attack"
+            else:
+                stroke_color = "#162338"
+                stroke_width = 1.0
+                edge_opacity = 0.22
+                marker_id = "arrow-muted"
+
+        # Calculate connection anchor points
+        # If target is below source: from bottom of source to top of target
+        if y2 > y1 + 30:
+            start_x, start_y = x1, y1 + card_h // 2
+            end_x, end_y = x2, y2 - card_h // 2 - 4
+            ctrl_y1 = start_y + (end_y - start_y) * 0.45
+            ctrl_y2 = start_y + (end_y - start_y) * 0.55
+            path_d = f"M {start_x} {start_y} C {start_x} {ctrl_y1}, {end_x} {ctrl_y2}, {end_x} {end_y}"
+            mid_x = (start_x + end_x) / 2
+            mid_y = (start_y + end_y) / 2
+        elif y2 < y1 - 30:
+            start_x, start_y = x1, y1 - card_h // 2
+            end_x, end_y = x2, y2 + card_h // 2 + 4
+            ctrl_y1 = start_y + (end_y - start_y) * 0.45
+            ctrl_y2 = start_y + (end_y - start_y) * 0.55
+            path_d = f"M {start_x} {start_y} C {start_x} {ctrl_y1}, {end_x} {ctrl_y2}, {end_x} {end_y}"
+            mid_x = (start_x + end_x) / 2
+            mid_y = (start_y + end_y) / 2
+        else:
+            # Horizontal connection
+            if x2 > x1:
+                start_x, start_y = x1 + card_w // 2, y1
+                end_x, end_y = x2 - card_w // 2 - 4, y2
+            else:
+                start_x, start_y = x1 - card_w // 2, y1
+                end_x, end_y = x2 + card_w // 2 + 4, y2
+            path_d = f"M {start_x} {start_y} L {end_x} {end_y}"
+            mid_x = (start_x + end_x) / 2
+            mid_y = (start_y + end_y) / 2
+
+        # Protocol badge label
+        label_pill_w = max(70, len(protocol) * 7 + 16)
+        label_svg = ""
+        if show_labels and protocol:
+            label_svg = f"""
+            <g class="soc-edge-label" opacity="{edge_opacity}">
+                <rect x="{mid_x - label_pill_w / 2}" y="{mid_y - 9}" width="{label_pill_w}" height="18" rx="4"
+                      fill="#070C14" stroke="{label_bg_border}" stroke-width="1" />
+                <text x="{mid_x}" y="{mid_y + 3.5}" text-anchor="middle"
+                      font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="600" fill="{label_text_color}">
+                    {protocol}
+                </text>
+            </g>
+            """
+
+        edges_svg.append(f"""
+        <g class="soc-edge-group">
+            <path d="{path_d}" fill="none" stroke="{stroke_color}" stroke-width="{stroke_width}"
+                  stroke-dasharray="{dash_array}" opacity="{edge_opacity}"
+                  marker-end="url(#{marker_id})" />
+            {label_svg}
+        </g>
+        """)
+
+    # Build Node SVG Elements
+    nodes_svg = []
+    for node in nodes:
+        n_id = str(node.get("id", ""))
+        if n_id not in positions:
+            continue
+
+        x, y = positions[n_id]
+        raw_label = str(node.get("label", n_id))
+        category = str(node.get("type", "DEVICE")).upper()
+        status = str(node.get("status", "SAFE")).upper()
+        risk = str(node.get("risk", "LOW")).upper()
+
+        tax = ENTITY_TAXONOMY.get(category, DEFAULT_TAXONOMY)
+        accent_color = tax["color"]
+        icon = tax["icon"]
+        cat_label = tax["label"]
+
+        # Override for compromised / attacker nodes
+        is_compromised = status in ["COMPROMISED", "MALICIOUS", "TARGET"] or category in ["ATTACKER"]
+        if is_compromised and category not in ["ATTACKER", "TARGET"]:
+            accent_color = "#E63946"
+
+        # Inspection Selection State
+        is_selected = (selected_node_id == n_id)
+
+        node_opacity = 1.0
+        if highlight_attack:
+            if is_compromised:
+                node_opacity = 1.0
+            else:
+                node_opacity = 0.32
+
+        card_stroke = accent_color if is_selected else ("#E63946" if is_compromised else "#162338")
+        card_stroke_w = "2" if (is_selected or is_compromised) else "1"
+        card_bg = "#111A2C" if is_selected else "#0D1422"
+
+        # Truncate label cleanly if too wide
+        display_name = raw_label
+        if len(display_name) > 22:
+            display_name = display_name[:20] + "…"
+
+        node_top_left_x = x - card_w // 2
+        node_top_left_y = y - card_h // 2
+
+        nodes_svg.append(f"""
+        <g class="soc-node-card" id="node-{n_id}" opacity="{node_opacity}" style="cursor: pointer;">
+            <!-- Outer Card Container -->
+            <rect x="{node_top_left_x}" y="{node_top_left_y}" width="{card_w}" height="{card_h}" rx="6"
+                  fill="{card_bg}" stroke="{card_stroke}" stroke-width="{card_stroke_w}" />
+            
+            <!-- Left Icon Badge Box -->
+            <rect x="{node_top_left_x + 8}" y="{node_top_left_y + 10}" width="{card_h - 20}" height="{card_h - 20}" rx="4"
+                  fill="{tax['bg']}" stroke="{accent_color}" stroke-width="1" />
+            <text x="{node_top_left_x + 8 + (card_h - 20)/2}" y="{node_top_left_y + 10 + (card_h - 20)/2 + 4.5}"
+                  text-anchor="middle" font-size="14">
+                {icon}
+            </text>
+
+            <!-- Entity Name -->
+            <text x="{node_top_left_x + card_h}" y="{node_top_left_y + 22}"
+                  font-family="'Inter', -apple-system, sans-serif" font-size="11.5" font-weight="600" fill="#F5F2ED">
+                {display_name if show_labels else "●●●"}
+            </text>
+
+            <!-- Entity Category & Status Subtitle -->
+            <text x="{node_top_left_x + card_h}" y="{node_top_left_y + 38}"
+                  font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600" fill="{accent_color}" letter-spacing="0.4px">
+                {category} &bull; {status}
+            </text>
+            
+            <title>{raw_label} | Type: {category} | Status: {status} | Risk: {risk}</title>
+        </g>
+        """)
+
+    all_edges_markup = "\n".join(edges_svg)
+    all_nodes_markup = "\n".join(nodes_svg)
+
+    html_content = textwrap.dedent(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            html, body {{
+                margin: 0;
+                padding: 0;
+                background-color: #05080E;
+                overflow: hidden;
+                font-family: 'Inter', -apple-system, sans-serif;
+            }}
+            .soc-hierarchical-svg {{
+                display: block;
+                width: 100%;
+                height: {height}px;
+                background-color: #05080E;
+                border: 1px solid #162338;
+                border-radius: 0 0 8px 8px;
+            }}
+            .soc-node-card:hover rect:first-child {{
+                filter: brightness(1.2);
+                stroke: #00E5C7 !important;
+                stroke-width: 2px !important;
+            }}
+            .soc-edge-group:hover path {{
+                stroke: #00E5C7 !important;
+                stroke-width: 3px !important;
+            }}
+        </style>
+    </head>
+    <body>
+        <svg class="soc-hierarchical-svg" viewBox="0 0 {canvas_w} {canvas_h}" preserveAspectRatio="xMidYMid meet">
+            <defs>
+                <!-- Directional Arrow Markers -->
+                <marker id="arrow-normal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#00E5C7" />
+                </marker>
+                <marker id="arrow-attack" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                    <path d="M 0 1 L 9 5 L 0 9 z" fill="#E63946" />
+                </marker>
+                <marker id="arrow-suspicious" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#F59E0B" />
+                </marker>
+                <marker id="arrow-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#8A94A6" />
+                </marker>
+            </defs>
+
+            <!-- Background Grid Accent -->
+            <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.03)" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+
+            <!-- Edge Relationship Curves -->
+            {all_edges_markup}
+
+            <!-- Node Hierarchy Cards -->
+            {all_nodes_markup}
+        </svg>
+    </body>
+    </html>
+    """).strip()
+
+    return html_content
+
+
+# -------------------------------------------------------------------------
+# Selected Entity Inspection Panel
+# -------------------------------------------------------------------------
 def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> None:
     """
-    Renders the SELECTED ENTITY inspection card.
+    Renders the detailed SELECTED ENTITY telemetry card.
     """
     if not selected_node:
         empty_html = textwrap.dedent("""
         <div class="soc-entity-panel">
             <div class="soc-entity-header">
                 <span class="soc-entity-title">🔍 SELECTED ENTITY</span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #64748b;">STANDBY</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #9A968F;">STANDBY</span>
             </div>
             <div class="soc-entity-empty">
                 <span style="font-size: 1.5rem; margin-bottom: 0.4rem;">🎯</span>
                 <div><strong>No entity selected.</strong></div>
-                <div style="font-size: 0.74rem; color: #475569; margin-top: 0.25rem;">
-                    Select any entity from the inspection control above or hover on graph nodes.
+                <div style="font-size: 0.74rem; color: #5A6478; margin-top: 0.25rem;">
+                    Select an entity from the inspection dropdown above to inspect detailed SOC telemetry.
                 </div>
             </div>
         </div>
@@ -366,7 +599,6 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
         st.markdown(empty_html, unsafe_allow_html=True)
         return
 
-    # Extract clean standardized metadata
     label = selected_node.get("label", selected_node.get("id", "Unknown"))
     entity_type = str(selected_node.get("type", "UNKNOWN")).upper()
     status = str(selected_node.get("status", "ACTIVE")).upper()
@@ -376,21 +608,18 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
     first_seen = selected_node.get("first_seen", "00:00:00")
     last_activity = selected_node.get("last_activity", "00:00:00")
 
-    # Risk badge styling
     risk_badge_class = "soc-badge-low"
     if risk == "CRITICAL":
         risk_badge_class = "soc-badge-critical"
     elif risk in ["HIGH", "MEDIUM"]:
         risk_badge_class = "soc-badge-high"
 
-    # Status badge styling
-    status_color = "#34d399"
+    status_color = "#00E5C7"
     if status in ["COMPROMISED", "MALICIOUS"]:
-        status_color = "#f87171"
+        status_color = "#E63946"
     elif status in ["SUSPICIOUS", "TARGET"]:
-        status_color = "#fbbf24"
+        status_color = "#F59E0B"
 
-    # Additional contextual fields
     extra_fields = []
     ignored_keys = {"id", "label", "type", "status", "risk", "ip", "device", "first_seen", "last_activity"}
     for k, v in selected_node.items():
@@ -410,10 +639,10 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
     panel_html = textwrap.dedent(f"""
     <div class="soc-entity-panel">
         <div class="soc-entity-header">
-            <span class="soc-entity-title">🔍 SELECTED ENTITY: <strong style="color: #38bdf8;">{label}</strong></span>
+            <span class="soc-entity-title">🔍 SELECTED ENTITY: <strong style="color: #00E5C7;">{label}</strong></span>
             <div style="display: flex; gap: 0.4rem; align-items: center;">
                 <span class="soc-scenario-badge {risk_badge_class}">RISK: {risk}</span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 600; padding: 1px 6px; border-radius: 3px; background: rgba(239, 68, 68, 0.1); color: {status_color}; border: 1px solid rgba(255,255,255,0.08);">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 4px; background: rgba(230, 57, 70, 0.1); color: {status_color}; border: 1px solid rgba(255,255,255,0.08);">
                     {status}
                 </span>
             </div>
@@ -421,7 +650,7 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
         <div class="soc-entity-grid">
             <div class="soc-entity-cell">
                 <div class="soc-entity-key">Entity Label</div>
-                <div class="soc-entity-val" style="color: #38bdf8;">{label}</div>
+                <div class="soc-entity-val" style="color: #00E5C7;">{label}</div>
             </div>
             <div class="soc-entity-cell">
                 <div class="soc-entity-key">Entity Type</div>
@@ -458,12 +687,19 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
     st.markdown(panel_html, unsafe_allow_html=True)
 
 
+# -------------------------------------------------------------------------
+# Left-Side Graph Legend Component
+# -------------------------------------------------------------------------
 def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = None) -> None:
     """
-    Renders the compact SOC graph legend and active attack chain summary.
+    Renders the compact, professional SOC graph legend on the LEFT side.
     """
     chains_count = len(attack_chains) if attack_chains else 0
-    attack_status_badge = f"""<span style="color: #f87171; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600;">ACTIVE CHAINS: {chains_count}</span>""" if chains_count > 0 else """<span style="color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 600;">BASELINE SAFE</span>"""
+    attack_status_badge = (
+        f'<span style="color: #E63946; font-family: \'JetBrains Mono\', monospace; font-size: 0.68rem; font-weight: 600;">ACTIVE CHAINS: {chains_count}</span>'
+        if chains_count > 0
+        else '<span style="color: #00E5C7; font-family: \'JetBrains Mono\', monospace; font-size: 0.68rem; font-weight: 600;">BASELINE SAFE</span>'
+    )
 
     chains_html = ""
     if attack_chains:
@@ -472,16 +708,16 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
             chain_name = chain.get("name", "Malicious Chain")
             chain_ttp = chain.get("ttp", "")
             chain_status = chain.get("status", "Active")
-            ttp_badge = f"""<span style="color: #fbbf24; font-size: 0.65rem; margin-left: 4px;">[{chain_ttp}]</span>""" if chain_ttp else ""
+            ttp_badge = f'<span style="color: #F59E0B; font-size: 0.65rem; margin-left: 4px;">[{chain_ttp}]</span>' if chain_ttp else ""
             chains_list_items += f"""
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; padding: 0.25rem 0; border-bottom: 1px solid #151f33; display: flex; justify-content: space-between;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; padding: 0.25rem 0; border-bottom: 1px solid #162338; display: flex; justify-content: space-between;">
                 <span>⚠️ {chain_name} {ttp_badge}</span>
-                <span style="color: #f87171; font-size: 0.68rem;">{chain_status}</span>
+                <span style="color: #E63946; font-size: 0.68rem;">{chain_status}</span>
             </div>
             """
         chains_html = f"""
-        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #1a263d;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.35rem;">
+        <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #162338;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #9A968F; text-transform: uppercase; margin-bottom: 0.35rem; font-weight: 600;">
                 DETECTED ATTACK PATH
             </div>
             {chains_list_items}
@@ -494,67 +730,51 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
             <span class="soc-entity-title">🗺️ GRAPH LEGEND</span>
             {attack_status_badge}
         </div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.3rem;">
-            Node Entity Types
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #9A968F; text-transform: uppercase; margin-bottom: 0.4rem; font-weight: 600; letter-spacing: 0.5px;">
+            NODE TYPES
         </div>
-        <div class="soc-legend-grid">
+        <div style="display: flex; flex-direction: column; gap: 0.35rem;">
             <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #ef4444;"></span>
-                <span>Attacker</span>
+                <span class="soc-legend-dot" style="background: #E63946;"></span>
+                <span>Attack / Critical Target</span>
             </div>
             <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #38bdf8;"></span>
-                <span>IP Address</span>
+                <span class="soc-legend-dot" style="background: #00E5C7;"></span>
+                <span>Host</span>
             </div>
             <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #a855f7;"></span>
+                <span class="soc-legend-dot" style="background: #F59E0B;"></span>
                 <span>User</span>
             </div>
             <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #3b82f6;"></span>
-                <span>Device</span>
-            </div>
-            <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #10b981;"></span>
-                <span>Server</span>
-            </div>
-            <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #f59e0b;"></span>
+                <span class="soc-legend-dot" style="background: #8A94A6;"></span>
                 <span>File</span>
             </div>
-            <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #eab308;"></span>
-                <span>USB Device</span>
-            </div>
-            <div class="soc-legend-item-box">
-                <span class="soc-legend-dot" style="background: #64748b;"></span>
-                <span>Infrastructure</span>
-            </div>
         </div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; margin-top: 0.65rem; margin-bottom: 0.3rem;">
-            Relationship Types
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #9A968F; text-transform: uppercase; margin-top: 0.8rem; margin-bottom: 0.4rem; font-weight: 600; letter-spacing: 0.5px;">
+            RELATIONSHIP TYPES
         </div>
         <div style="display: flex; flex-direction: column; gap: 0.35rem;">
             <div class="soc-legend-item-box" style="justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="soc-legend-line" style="background: #38bdf8;"></span>
-                    <span>Normal relationship</span>
+                    <span class="soc-legend-line" style="background: #00E5C7;"></span>
+                    <span>— Normal</span>
                 </div>
-                <span style="font-size: 0.65rem; color: #64748b;">Kerberos / SMB / Login</span>
+                <span style="font-size: 0.65rem; color: #9A968F;">SMB / Auth</span>
             </div>
             <div class="soc-legend-item-box" style="justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="soc-legend-line" style="background: #f59e0b; border-style: dashed;"></span>
-                    <span>Suspicious relationship</span>
+                    <span class="soc-legend-line" style="background: #F59E0B; border-top: 2px dashed #F59E0B; height: 0;"></span>
+                    <span>- - Suspicious</span>
                 </div>
-                <span style="font-size: 0.65rem; color: #f59e0b;">Unapproved Access</span>
+                <span style="font-size: 0.65rem; color: #F59E0B;">Unapproved</span>
             </div>
             <div class="soc-legend-item-box" style="justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="soc-legend-line" style="background: #ef4444; height: 4px;"></span>
-                    <span style="color: #f87171; font-weight: 600;">Attack path</span>
+                    <span class="soc-legend-line" style="background: #E63946; height: 3px;"></span>
+                    <span style="color: #E63946; font-weight: 600;">➔ Attack Path</span>
                 </div>
-                <span style="font-size: 0.65rem; color: #f87171;">C2 / Pivot / Exfil</span>
+                <span style="font-size: 0.65rem; color: #E63946;">Pivot / Exfil</span>
             </div>
         </div>
         {chains_html}
@@ -563,17 +783,19 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
     st.markdown(legend_html, unsafe_allow_html=True)
 
 
+# -------------------------------------------------------------------------
+# Main Attack Graph Renderer
+# -------------------------------------------------------------------------
 def render_attack_graph(
     graph_data: Optional[Dict[str, Any]] = None,
-    height: int = 500,
+    height: int = 460,
     **kwargs
 ) -> None:
     """
-    Renders the complete interactive attack graph workspace including:
-    - Graph Controls Toolbar
-    - Interactive PyVis Canvas
-    - Selected Entity Inspection Panel
-    - Graph Legend and Attack Path Telemetry
+    Renders the complete hybrid hierarchical attack-path command center workspace:
+    1. Top Controls Bar (Filter, Highlight, Label Toggle, Inspect, Reset)
+    2. Two-Column Main Visualization (Left: Legend, Right: Structured Hierarchical Canvas)
+    3. Bottom Selected Entity Inspection Panel
     """
     # Initialize graph control states in Streamlit session state
     if "graph_selected_node_id" not in st.session_state:
@@ -595,8 +817,8 @@ def render_attack_graph(
 
     header_html = textwrap.dedent(f"""
     <div class="soc-section-header">
-        <h3 class="soc-section-title">🌐 ATTACK PATH / NETWORK TOPOLOGY</h3>
-        <span class="soc-section-subtitle">Target: {dataset_name} &bull; [ Interactive PyVis Engine ]</span>
+        <h3 class="soc-section-title">🌐 ATTACK PATH / HIERARCHICAL TOPOLOGY</h3>
+        <span class="soc-section-subtitle">Target: {dataset_name} &bull; [ Structured Hierarchical Flow ]</span>
     </div>
     """).strip()
     st.markdown(header_html, unsafe_allow_html=True)
@@ -609,10 +831,10 @@ def render_attack_graph(
     if not graph_data or (not raw_nodes and not raw_edges):
         empty_graph_html = textwrap.dedent("""
         <div class="soc-graph-container" style="min-height: 280px; justify-content: center; align-items: center;">
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #64748b; text-align: center;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #9A968F; text-align: center;">
                 <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">🔍</span>
                 No attack relationships available.
-                <div style="font-size: 0.75rem; color: #475569; margin-top: 0.25rem;">
+                <div style="font-size: 0.75rem; color: #5A6478; margin-top: 0.25rem;">
                     Ingest security logs or select an attack scenario above to generate network topology.
                 </div>
             </div>
@@ -626,7 +848,7 @@ def render_attack_graph(
     if st.session_state["graph_selected_node_id"] and st.session_state["graph_selected_node_id"] not in current_node_ids:
         st.session_state["graph_selected_node_id"] = None
 
-    # 3. Graph Controls Bar
+    # 3. Top Graph Controls Bar
     ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4, ctrl_col5 = st.columns([1.8, 1.4, 1.2, 2.2, 1.0])
 
     with ctrl_col1:
@@ -655,7 +877,7 @@ def render_attack_graph(
             "Highlight Attack Path",
             value=st.session_state["graph_highlight_attack"],
             key="graph_highlight_check",
-            help="Visually emphasizes primary adversary attack chain with bold directional lines"
+            help="Visually emphasizes primary adversary attack chain with bold crimson directional lines"
         )
         st.session_state["graph_highlight_attack"] = highlight_attack
 
@@ -665,7 +887,7 @@ def render_attack_graph(
             "Show Node Labels",
             value=st.session_state["graph_show_labels"],
             key="graph_labels_check",
-            help="Toggle entity labels visibility on graph canvas"
+            help="Toggle entity labels and protocol names on graph canvas"
         )
         st.session_state["graph_show_labels"] = show_labels
 
@@ -717,67 +939,53 @@ def render_attack_graph(
         and str(e.get("target", e.get("to", ""))) in filtered_node_ids
     ] if active_filter != "ALL" else raw_edges
 
-    # 5. Graph Container Header Strip
     visible_nodes_count = len(filtered_nodes)
     visible_edges_count = len(filtered_edges)
 
-    strip_html = textwrap.dedent(f"""
-    <div style="background: #0c1322; border: 1px solid #1a263d; border-radius: 8px 8px 0 0; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-top: 0.5rem;">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #94a3b8;">
-            <span>TOPOLOGY: <strong style="color: #ffffff;">{dataset_name}</strong></span>
-            <span style="margin: 0 8px; color: #1e293b;">|</span>
-            <span>NODES: <strong style="color: #38bdf8;">{visible_nodes_count}</strong></span>
-            <span style="margin: 0 8px; color: #1e293b;">|</span>
-            <span>EDGES: <strong style="color: #38bdf8;">{visible_edges_count}</strong></span>
-            <span style="margin: 0 8px; color: #1e293b;">|</span>
-            <span>FILTER: <strong style="color: #a855f7;">{active_filter}</strong></span>
+    # 5. Main Visualization Area: LEFT Column = Legend, RIGHT Column = Hierarchical Canvas
+    main_col1, main_col2 = st.columns([1.0, 3.2])
+
+    with main_col1:
+        render_graph_legend_panel(attack_chains=attack_chains)
+
+    with main_col2:
+        # Hierarchical Canvas Header Strip
+        strip_html = textwrap.dedent(f"""
+        <div style="background: #080D16; border: 1px solid #162338; border-radius: 8px 8px 0 0; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #9A968F;">
+                <span>TOPOLOGY: <strong style="color: #F5F2ED;">{dataset_name}</strong></span>
+                <span style="margin: 0 8px; color: #162338;">|</span>
+                <span>NODES: <strong style="color: #00E5C7;">{visible_nodes_count}</strong></span>
+                <span style="margin: 0 8px; color: #162338;">|</span>
+                <span>EDGES: <strong style="color: #00E5C7;">{visible_edges_count}</strong></span>
+                <span style="margin: 0 8px; color: #162338;">|</span>
+                <span>FILTER: <strong style="color: #38BDF8;">{active_filter}</strong></span>
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #00E5C7;">
+                ● HIERARCHICAL ATTACK FLOW
+            </div>
         </div>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #34d399;">
-            ● INTERACTIVE CANVAS (Drag &bull; Zoom &bull; Pan &bull; Hover)
-        </div>
-    </div>
-    """).strip()
-    st.markdown(strip_html, unsafe_allow_html=True)
+        """).strip()
+        st.markdown(strip_html, unsafe_allow_html=True)
 
-    # 6. Render PyVis Canvas
-    try:
-        net = create_pyvis_network(
-            nodes=filtered_nodes,
-            edges=filtered_edges,
-            selected_node_id=st.session_state["graph_selected_node_id"],
-            show_labels=st.session_state["graph_show_labels"],
-            highlight_attack=st.session_state["graph_highlight_attack"],
-            height=height
-        )
-        raw_html = net.generate_html()
-
-        # Custom inline style injection for full container fit
-        custom_wrapper = f"""
-        <style>
-            html, body {{
-                margin: 0;
-                padding: 0;
-                background-color: #070b14 !important;
-                overflow: hidden;
-            }}
-            #mynetwork {{
-                background-color: #070b14 !important;
-                border: 1px solid #1a263d !important;
-                border-radius: 0 0 8px 8px;
-            }}
-        </style>
-        {raw_html}
-        """
-
-        components.html(custom_wrapper, height=height + 20, scrolling=False)
-
-    except Exception as e:
-        st.error(f"Unable to render attack graph: {e}")
+        # Render Hierarchical Interactive Canvas
+        try:
+            hierarchical_html = generate_hierarchical_graph_html(
+                nodes=filtered_nodes,
+                edges=filtered_edges,
+                selected_node_id=st.session_state["graph_selected_node_id"],
+                show_labels=st.session_state["graph_show_labels"],
+                highlight_attack=st.session_state["graph_highlight_attack"],
+                scenario_id=st.session_state.get("selected_scenario", "clean_logs"),
+                height=height
+            )
+            components.html(hierarchical_html, height=height + 20, scrolling=False)
+        except Exception as e:
+            st.error(f"Unable to render hierarchical attack graph: {e}")
 
     st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
 
-    # 7. Bottom Two-Column Inspector & Legend Layout
-    # Find active node dict if any
+    # 6. Bottom Selected Entity Inspection Panel
     selected_node_dict = None
     if st.session_state["graph_selected_node_id"]:
         for n in raw_nodes:
@@ -785,10 +993,4 @@ def render_attack_graph(
                 selected_node_dict = n
                 break
 
-    bottom_col1, bottom_col2 = st.columns([1.3, 1.0])
-
-    with bottom_col1:
-        render_selected_entity_panel(selected_node=selected_node_dict)
-
-    with bottom_col2:
-        render_graph_legend_panel(attack_chains=attack_chains)
+    render_selected_entity_panel(selected_node=selected_node_dict)

@@ -1,6 +1,7 @@
 """
-Unit test for Attack Graph data structures, PyVis generation, Node Inspection,
-Filtering, Attack Path Highlighting, and Edge Cases.
+Unit test for Attack Graph data structures, Hierarchical SVG/HTML5 Generation,
+PyVis backward-compatibility, Node Inspection, Filtering, Attack Path Highlighting,
+and Edge Cases.
 """
 
 from data.graph_demo_data import (
@@ -10,7 +11,12 @@ from data.graph_demo_data import (
     get_graph_for_scenario,
     SCENARIO_GRAPHS
 )
-from components.attack_graph import create_pyvis_network
+from components.attack_graph import (
+    create_pyvis_network,
+    generate_hierarchical_graph_html,
+    compute_hierarchical_positions,
+    extract_clean_protocol
+)
 
 def run_tests():
     print("Testing Graph Demo Data Structures...")
@@ -51,60 +57,81 @@ def run_tests():
         assert "edges" in g
         print(f"  [OK] get_graph_for_scenario('{s_id}') -> {g['name']}")
 
-    # 5. Test PyVis Network Generation with Filtering & Highlighting
-    print("\nTesting PyVis Network Generation & Controls...")
+    # 5. Test Hierarchical Positions Computation
+    print("\nTesting Hierarchical Layout Positioning...")
+    clean_pos = compute_hierarchical_positions(CLEAN_GRAPH["nodes"], CLEAN_GRAPH["edges"], "clean_logs")
+    assert clean_pos["dc-01"][1] < clean_pos["file-srv"][1]
+    assert clean_pos["dc-01"][1] < clean_pos["wkst-01"][1]
+    assert clean_pos["file-srv"][1] < clean_pos["doc-budget"][1]
+    assert clean_pos["wkst-01"][1] < clean_pos["usr-alice"][1]
+    # Check left vs right branching
+    assert clean_pos["file-srv"][0] < clean_pos["dc-01"][0] < clean_pos["wkst-01"][0]
+    assert clean_pos["doc-budget"][0] < clean_pos["dc-01"][0] < clean_pos["usr-alice"][0]
+    print("  [OK] Clean Logs exact 3-level tree hierarchy verified (DC -> FileServer/WS-ALPHA -> Budget/alice)")
+
+    # 6. Test Protocol Extractor
+    assert extract_clean_protocol("SMB_CONNECT (Port 445)", "REMOTE CONNECTION") == "SMB_CONNECT"
+    assert extract_clean_protocol("AUTH_TGS (Port 88)", "ACCESS") == "AUTH_TGS"
+    assert extract_clean_protocol("LOGIN (Kerberos)", "LOGIN") == "LOGON"
+    print("  [OK] Protocol label extraction verified (SMB_CONNECT, AUTH_TGS, LOGON)")
+
+    # 7. Test Hierarchical SVG/HTML5 Generation
+    print("\nTesting Hierarchical HTML5 Graph Generation & Controls...")
     for s_id in ["clean_logs", "usb_exfiltration", "lateral_movement"]:
         g = get_graph_for_scenario(s_id)
-        # Test default
-        net = create_pyvis_network(
+        # Test standard
+        html = generate_hierarchical_graph_html(
             nodes=g["nodes"],
             edges=g["edges"],
             selected_node_id=None,
             show_labels=True,
             highlight_attack=False,
-            height=500
+            scenario_id=s_id,
+            height=460
         )
-        html = net.generate_html()
         assert len(html) > 500
-        assert "vis" in html.lower() or "network" in html.lower()
+        assert "<svg" in html
+        assert "soc-node-card" in html
 
         # Test with highlighted attack path
-        net_hl = create_pyvis_network(
+        html_hl = generate_hierarchical_graph_html(
             nodes=g["nodes"],
             edges=g["edges"],
             selected_node_id=g["nodes"][0]["id"],
             show_labels=True,
             highlight_attack=True,
-            height=500
+            scenario_id=s_id,
+            height=460
         )
-        html_hl = net_hl.generate_html()
         assert len(html_hl) > 500
+        assert "arrow-attack" in html_hl
 
         # Test with hidden labels
-        net_nolabel = create_pyvis_network(
+        html_nolabel = generate_hierarchical_graph_html(
             nodes=g["nodes"],
             edges=g["edges"],
             selected_node_id=None,
             show_labels=False,
             highlight_attack=False,
-            height=500
+            scenario_id=s_id,
+            height=460
         )
-        html_nolabel = net_nolabel.generate_html()
         assert len(html_nolabel) > 500
 
-        print(f"  [OK] PyVis HTML successfully generated for {s_id} (All Control Variants Passed)")
+        print(f"  [OK] Hierarchical HTML successfully generated for {s_id} (All Variants Passed)")
 
-    # 6. Test Nodes-Only Graph Handling (0 edges)
-    nodes_only = [{"id": "n1", "label": "Host A", "type": "DEVICE", "status": "SAFE"}]
-    net_nodes_only = create_pyvis_network(nodes=nodes_only, edges=[], height=500)
-    html_nodes_only = net_nodes_only.generate_html()
-    assert len(html_nodes_only) > 200
-    print("  [OK] Nodes-only graph successfully generated without edges")
+    # 8. Test PyVis Compatibility
+    print("\nTesting PyVis Backward-Compatibility Layer...")
+    for s_id in ["clean_logs", "usb_exfiltration", "lateral_movement"]:
+        g = get_graph_for_scenario(s_id)
+        net = create_pyvis_network(nodes=g["nodes"], edges=g["edges"], height=500)
+        html = net.generate_html()
+        assert len(html) > 100
+        print(f"  [OK] PyVis layer verified for {s_id}")
 
-    # 7. Test Empty & Corrupt Input Handling
-    net_empty = create_pyvis_network(nodes=[], edges=[], height=500)
-    html_empty = net_empty.generate_html()
-    assert len(html_empty) > 100
+    # 9. Test Empty & Corrupt Input Handling
+    html_empty = generate_hierarchical_graph_html(nodes=[], edges=[], height=460)
+    assert "<svg" in html_empty
     print("  [OK] Empty graph handled gracefully with valid minimal container")
 
     print("\nALL GRAPH & CONTROLS TESTS PASSED SUCCESSFULLY!")
