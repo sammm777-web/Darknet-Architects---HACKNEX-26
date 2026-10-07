@@ -1,6 +1,6 @@
 """
 SOC Metric Cards Component.
-Displays high-level operational metrics:
+Displays dynamic high-level operational telemetry cards:
 - Total Logs Ingested
 - Benign Logs Ignored
 - Active Attack Chains
@@ -10,67 +10,77 @@ Displays high-level operational metrics:
 from typing import Dict, Any, Optional
 import streamlit as st
 
-DEFAULT_DEMO_METRICS: Dict[str, Any] = {
-    "total_logs": "12,482",
-    "benign_logs": "11,973",
-    "attack_chains": "03",
-    "threat_level": "CRITICAL"
+DEFAULT_METRICS: Dict[str, Any] = {
+    "total_logs": "1,240",
+    "benign_logs": "1,240",
+    "attack_chains": "0",
+    "threat_level": "LOW"
 }
 
-def render_metric_cards(metrics: Optional[Dict[str, Any]] = None):
+def render_metric_cards(metrics: Optional[Dict[str, Any]] = None, **kwargs):
     """
-    Renders the 4 standard SOC metric cards in a horizontal responsive grid.
+    Renders the 4 standard SOC metric cards in a responsive grid.
     
     Parameters:
     -----------
     metrics : dict, optional
-        Dictionary containing metric values:
+        Dictionary containing dynamic metric values:
         - total_logs: str or int
         - benign_logs: str or int
         - attack_chains: str or int
-        - threat_level: str ("CRITICAL", "HIGH", "MEDIUM", "LOW", "NORMAL")
+        - threat_level: str ("CRITICAL", "HIGH", "MEDIUM", "LOW", "ANALYZING")
     """
     if metrics is None:
-        metrics = DEFAULT_DEMO_METRICS
+        metrics = DEFAULT_METRICS
 
-    total_logs = metrics.get("total_logs", "0")
-    benign_logs = metrics.get("benign_logs", "0")
-    attack_chains = metrics.get("attack_chains", "0")
-    threat_level = str(metrics.get("threat_level", "NORMAL")).upper()
+    total_logs = str(metrics.get("total_logs", "0"))
+    benign_logs = str(metrics.get("benign_logs", "0"))
+    attack_chains = str(metrics.get("attack_chains", "0"))
+    threat_level = str(metrics.get("threat_level", "LOW")).upper()
 
     # Determine threat styling
-    if threat_level in ["CRITICAL", "HIGH"]:
-        threat_pill = f'<span class="soc-threat-pill-critical">{threat_level}</span>'
+    if threat_level == "CRITICAL":
+        threat_pill = '<span class="soc-threat-pill critical">CRITICAL</span>'
         threat_accent = "accent-crimson"
-    elif threat_level == "MEDIUM":
-        threat_pill = f'<span style="color:#f59e0b; font-weight:700; font-size:1.25rem;">{threat_level}</span>'
+        threat_subtext = "Immediate response required"
+    elif threat_level == "HIGH":
+        threat_pill = '<span class="soc-threat-pill high">HIGH</span>'
         threat_accent = "accent-amber"
-    else:
-        threat_pill = f'<span style="color:#10b981; font-weight:700; font-size:1.25rem;">{threat_level}</span>'
+        threat_subtext = "Active incident triaged"
+    elif threat_level in ["EVALUATING", "ANALYZING", "PENDING"]:
+        threat_pill = f'<span class="soc-threat-pill analyzing">{threat_level}</span>'
         threat_accent = "accent-cyan"
+        threat_subtext = "Detection pipeline queued"
+    else:
+        threat_pill = '<span class="soc-threat-pill low">LOW</span>'
+        threat_accent = "accent-cyan"
+        threat_subtext = "Baseline within normal limits"
 
     cards_html = f"""
-    <div class="soc-section-title">📊 SOC OPERATIONAL METRICS</div>
+    <div class="soc-section-header">
+        <h3 class="soc-section-title">📊 SOC METRICS</h3>
+        <span class="soc-section-subtitle">Real-time incident response &amp; log reduction metrics</span>
+    </div>
     <div class="soc-metric-grid">
         <div class="soc-metric-card accent-cyan">
             <div class="soc-metric-label">Total Logs Ingested</div>
             <div class="soc-metric-value">{total_logs}</div>
-            <div class="soc-metric-meta">Processed event streams</div>
+            <div class="soc-metric-subtext">Ingested stream events</div>
         </div>
         <div class="soc-metric-card accent-blue">
             <div class="soc-metric-label">Benign Logs Ignored</div>
             <div class="soc-metric-value">{benign_logs}</div>
-            <div class="soc-metric-meta">Noise reduction ratio: 95.9%</div>
+            <div class="soc-metric-subtext">Filtered background noise</div>
         </div>
         <div class="soc-metric-card accent-amber">
             <div class="soc-metric-label">Active Attack Chains</div>
             <div class="soc-metric-value">{attack_chains}</div>
-            <div class="soc-metric-meta">Correlated threat vectors</div>
+            <div class="soc-metric-subtext">Correlated kill chains</div>
         </div>
         <div class="soc-metric-card {threat_accent}">
             <div class="soc-metric-label">Threat Level</div>
-            <div class="soc-metric-value" style="padding-top:2px;">{threat_pill}</div>
-            <div class="soc-metric-meta">Automated triage status</div>
+            <div class="soc-metric-value" style="font-size: 1.35rem; padding-top: 2px;">{threat_pill}</div>
+            <div class="soc-metric-subtext">{threat_subtext}</div>
         </div>
     </div>
     """
