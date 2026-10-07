@@ -1,7 +1,7 @@
-pandas
-networkx
-pyvis
-streamlit
+streamlit>=1.30.0
+pandas>=1.4.0
+pyvis>=0.3.2
+networkx>=3.0
 openai
 scikit-learn
 python-dotenv

@@ -1,5 +1,7 @@
 # Environments and secrets
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -11,20 +13,29 @@ venv.bak/
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Streamlit Local Runtime
+.streamlit/secrets.toml
 
 # Distribution / packaging
 build/
 dist/
 *.egg-info/
 .eggs/
-
-# IDE and OS files
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
 
 # Testing and coverage
 .pytest_cache/
