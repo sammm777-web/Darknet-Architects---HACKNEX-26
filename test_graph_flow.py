@@ -1,5 +1,6 @@
 """
-Unit test for Attack Graph data structures, PyVis generation, and empty graph handling.
+Unit test for Attack Graph data structures, PyVis generation, Node Inspection,
+Filtering, Attack Path Highlighting, and Edge Cases.
 """
 
 from data.graph_demo_data import (
@@ -17,7 +18,11 @@ def run_tests():
     # 1. Test Clean Logs Graph
     assert len(CLEAN_GRAPH["nodes"]) == 5
     assert len(CLEAN_GRAPH["edges"]) == 4
-    print("  [OK] Clean Logs graph structure verified (5 nodes, 4 edges)")
+    for node in CLEAN_GRAPH["nodes"]:
+        assert "risk" in node
+        assert "first_seen" in node
+        assert "last_activity" in node
+    print("  [OK] Clean Logs graph structure verified with rich SOC telemetry (5 nodes, 4 edges)")
 
     # 2. Test USB Exfiltration Graph
     assert len(USB_EXFILTRATION_GRAPH["nodes"]) == 5
@@ -46,28 +51,63 @@ def run_tests():
         assert "edges" in g
         print(f"  [OK] get_graph_for_scenario('{s_id}') -> {g['name']}")
 
-    # 5. Test PyVis Network Generation
-    print("\nTesting PyVis Network Generation...")
+    # 5. Test PyVis Network Generation with Filtering & Highlighting
+    print("\nTesting PyVis Network Generation & Controls...")
     for s_id in ["clean_logs", "usb_exfiltration", "lateral_movement"]:
         g = get_graph_for_scenario(s_id)
-        net = create_pyvis_network(g, height=500)
+        # Test default
+        net = create_pyvis_network(
+            nodes=g["nodes"],
+            edges=g["edges"],
+            selected_node_id=None,
+            show_labels=True,
+            highlight_attack=False,
+            height=500
+        )
         html = net.generate_html()
         assert len(html) > 500
         assert "vis" in html.lower() or "network" in html.lower()
-        print(f"  [OK] PyVis HTML successfully generated for {s_id} (HTML length: {len(html)} bytes)")
+
+        # Test with highlighted attack path
+        net_hl = create_pyvis_network(
+            nodes=g["nodes"],
+            edges=g["edges"],
+            selected_node_id=g["nodes"][0]["id"],
+            show_labels=True,
+            highlight_attack=True,
+            height=500
+        )
+        html_hl = net_hl.generate_html()
+        assert len(html_hl) > 500
+
+        # Test with hidden labels
+        net_nolabel = create_pyvis_network(
+            nodes=g["nodes"],
+            edges=g["edges"],
+            selected_node_id=None,
+            show_labels=False,
+            highlight_attack=False,
+            height=500
+        )
+        html_nolabel = net_nolabel.generate_html()
+        assert len(html_nolabel) > 500
+
+        print(f"  [OK] PyVis HTML successfully generated for {s_id} (All Control Variants Passed)")
 
     # 6. Test Nodes-Only Graph Handling (0 edges)
-    nodes_only = {
-        "name": "Isolated Nodes",
-        "nodes": [{"id": "n1", "label": "Host A", "type": "DEVICE", "status": "SAFE"}],
-        "edges": []
-    }
-    net_nodes_only = create_pyvis_network(nodes_only, height=500)
+    nodes_only = [{"id": "n1", "label": "Host A", "type": "DEVICE", "status": "SAFE"}]
+    net_nodes_only = create_pyvis_network(nodes=nodes_only, edges=[], height=500)
     html_nodes_only = net_nodes_only.generate_html()
     assert len(html_nodes_only) > 200
     print("  [OK] Nodes-only graph successfully generated without edges")
 
-    print("\nALL GRAPH TESTS PASSED SUCCESSFULLY!")
+    # 7. Test Empty & Corrupt Input Handling
+    net_empty = create_pyvis_network(nodes=[], edges=[], height=500)
+    html_empty = net_empty.generate_html()
+    assert len(html_empty) > 100
+    print("  [OK] Empty graph handled gracefully with valid minimal container")
+
+    print("\nALL GRAPH & CONTROLS TESTS PASSED SUCCESSFULLY!")
 
 if __name__ == "__main__":
     run_tests()

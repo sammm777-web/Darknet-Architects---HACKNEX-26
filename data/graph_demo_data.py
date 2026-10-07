@@ -20,36 +20,60 @@ CLEAN_GRAPH: Dict[str, Any] = {
             "label": "alice.sec",
             "type": "USER",
             "status": "NORMAL",
+            "risk": "LOW",
             "ip": "10.0.1.15",
-            "role": "Security Analyst"
+            "device": "WS-ALPHA",
+            "role": "Security Analyst",
+            "first_seen": "08:15:22",
+            "last_activity": "09:42:10"
         },
         {
             "id": "wkst-01",
             "label": "WS-ALPHA (10.0.1.15)",
             "type": "DEVICE",
             "status": "SAFE",
-            "os": "Windows 11 Enterprise"
+            "risk": "LOW",
+            "ip": "10.0.1.15",
+            "device": "WS-ALPHA",
+            "os": "Windows 11 Enterprise",
+            "first_seen": "08:00:00",
+            "last_activity": "09:42:10"
         },
         {
             "id": "dc-01",
             "label": "Domain Controller (10.0.0.5)",
             "type": "SERVER",
             "status": "SAFE",
-            "service": "Active Directory / Kerberos"
+            "risk": "LOW",
+            "ip": "10.0.0.5",
+            "device": "DC-01",
+            "service": "Active Directory / Kerberos",
+            "first_seen": "00:00:01",
+            "last_activity": "09:45:00"
         },
         {
             "id": "file-srv",
             "label": "File Server (10.0.0.22)",
             "type": "SERVER",
             "status": "SAFE",
-            "service": "SMB File Share"
+            "risk": "LOW",
+            "ip": "10.0.0.22",
+            "device": "SRV-FILE-01",
+            "service": "SMB File Share",
+            "first_seen": "00:00:01",
+            "last_activity": "09:41:50"
         },
         {
             "id": "doc-budget",
             "label": "Quarterly_Budget.xlsx",
             "type": "FILE",
             "status": "SAFE",
-            "path": "\\\\FileServer\\Finance\\Budget.xlsx"
+            "risk": "LOW",
+            "ip": "10.0.0.22",
+            "device": "SRV-FILE-01",
+            "path": "\\\\FileServer\\Finance\\Budget.xlsx",
+            "first_seen": "09:30:00",
+            "last_activity": "09:41:50"
         }
     ],
     "edges": [
@@ -96,35 +120,60 @@ USB_EXFILTRATION_GRAPH: Dict[str, Any] = {
             "label": "john.doe",
             "type": "USER",
             "status": "COMPROMISED",
-            "role": "Finance Clerk"
+            "risk": "HIGH",
+            "ip": "192.168.1.42",
+            "device": "WS-042",
+            "role": "Finance Clerk",
+            "first_seen": "10:32:14",
+            "last_activity": "10:38:51"
         },
         {
             "id": "wkst-042",
-            "label": "WS-042 (10.0.2.45)",
+            "label": "WS-042 (192.168.1.42)",
             "type": "DEVICE",
             "status": "COMPROMISED",
-            "os": "Windows 10 Workstation"
+            "risk": "HIGH",
+            "ip": "192.168.1.42",
+            "device": "WS-042",
+            "os": "Windows 10 Workstation",
+            "first_seen": "10:30:00",
+            "last_activity": "10:38:55"
         },
         {
             "id": "doc-sensitive",
             "label": "financial_records.xlsx",
             "type": "FILE",
             "status": "COMPROMISED",
-            "path": "C:\\Users\\john\\Documents\\Confidential\\financial_records.xlsx"
+            "risk": "HIGH",
+            "ip": "192.168.1.42",
+            "device": "WS-042",
+            "path": "C:\\Users\\john\\Documents\\Confidential\\financial_records.xlsx",
+            "first_seen": "10:35:12",
+            "last_activity": "10:37:40"
         },
         {
             "id": "usb-042",
             "label": "USB-042 (Removable E:)",
             "type": "USB DEVICE",
             "status": "MALICIOUS",
-            "serial": "KNGSTN-8842-EXFIL"
+            "risk": "CRITICAL",
+            "ip": "192.168.1.42",
+            "device": "WS-042",
+            "serial": "KNGSTN-8842-EXFIL",
+            "first_seen": "10:36:05",
+            "last_activity": "10:38:51"
         },
         {
             "id": "ext-drop",
-            "label": "External Destination",
+            "label": "Physical Drop Egress",
             "type": "ATTACKER",
             "status": "MALICIOUS",
-            "target": "Physical Drive Egress / Offsite Drop"
+            "risk": "CRITICAL",
+            "ip": "External / Offline",
+            "device": "Removable Flash Drive",
+            "target": "Physical Drive Egress / Offsite Drop",
+            "first_seen": "10:38:51",
+            "last_activity": "10:38:51"
         }
     ],
     "edges": [
@@ -168,45 +217,75 @@ LATERAL_MOVEMENT_GRAPH: Dict[str, Any] = {
     "nodes": [
         {
             "id": "attacker-c2",
-            "label": "Attacker IP (198.51.100.42)",
+            "label": "Attacker C2 (198.51.100.42)",
             "type": "ATTACKER",
             "status": "MALICIOUS",
-            "infrastructure": "Cobalt Strike C2 Server"
+            "risk": "CRITICAL",
+            "ip": "198.51.100.42",
+            "device": "C2 Server (Cobalt Strike)",
+            "infrastructure": "Cobalt Strike Team Server",
+            "first_seen": "03:12:08",
+            "last_activity": "03:45:19"
         },
         {
             "id": "wkst-compromised",
-            "label": "Compromised Workstation (10.0.1.12)",
+            "label": "Compromised WS (10.0.1.12)",
             "type": "DEVICE",
             "status": "COMPROMISED",
-            "initial_vector": "Phishing / Reverse Shell"
+            "risk": "HIGH",
+            "ip": "10.0.1.12",
+            "device": "WS-FIN-012",
+            "initial_vector": "Phishing / Reverse Shell (Port 443)",
+            "first_seen": "03:14:22",
+            "last_activity": "03:44:00"
         },
         {
             "id": "usr-compromised",
-            "label": "Compromised User (admin.svc)",
+            "label": "admin.svc (Harvested Creds)",
             "type": "USER",
             "status": "COMPROMISED",
-            "privilege": "Local Administrator"
+            "risk": "CRITICAL",
+            "ip": "10.0.1.12",
+            "device": "WS-FIN-012",
+            "privilege": "Local Administrator / Tier-1",
+            "first_seen": "03:22:15",
+            "last_activity": "03:44:30"
         },
         {
             "id": "srv-internal",
-            "label": "Internal Server (10.0.0.14)",
+            "label": "App Middleware (10.0.0.14)",
             "type": "SERVER",
             "status": "COMPROMISED",
-            "role": "Application Middleware"
+            "risk": "HIGH",
+            "ip": "10.0.0.14",
+            "device": "SRV-APP-01",
+            "role": "Application Middleware",
+            "first_seen": "03:30:45",
+            "last_activity": "03:43:10"
         },
         {
             "id": "wkst-second",
-            "label": "Second Workstation (10.0.1.99)",
+            "label": "Jumpbox WS (10.0.1.99)",
             "type": "DEVICE",
             "status": "COMPROMISED",
-            "role": "Management Jumpbox"
+            "risk": "HIGH",
+            "ip": "10.0.1.99",
+            "device": "WS-MGMT-99",
+            "role": "Management Jumpbox",
+            "first_seen": "03:36:12",
+            "last_activity": "03:44:50"
         },
         {
             "id": "dc-crown-jewel",
             "label": "Primary DC-01 (10.0.0.5)",
             "type": "SERVER",
             "status": "TARGET",
-            "role": "Active Directory Crown Jewel"
+            "risk": "CRITICAL",
+            "ip": "10.0.0.5",
+            "device": "DC-CORP-01",
+            "role": "Active Directory Crown Jewel",
+            "first_seen": "00:00:01",
+            "last_activity": "03:45:19"
         }
     ],
     "edges": [

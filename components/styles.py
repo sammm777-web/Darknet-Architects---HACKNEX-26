@@ -382,7 +382,7 @@ SOC_CSS = """
 .soc-threat-pill.analyzing { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
 
 /* ====================================================================
-   ATTACK GRAPH WORKSPACE CONTAINER
+   ATTACK GRAPH WORKSPACE CONTAINER & ENTITY INSPECTOR
    ==================================================================== */
 .soc-graph-container {
     background: var(--soc-bg-surface);
@@ -412,57 +412,128 @@ SOC_CSS = """
     color: var(--soc-text-secondary);
 }
 
-.soc-graph-canvas-placeholder {
-    flex: 1;
+.soc-graph-controls-strip {
+    background: #090e1c;
+    border: 1px solid var(--soc-border);
+    border-radius: 6px;
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Entity Inspector Panel */
+.soc-entity-panel {
+    background: var(--soc-bg-surface);
+    border: 1px solid var(--soc-border);
+    border-radius: 8px;
+    padding: 1.1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.soc-entity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--soc-border-subtle);
+}
+
+.soc-entity-title {
+    font-family: var(--soc-font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    text-transform: uppercase;
+}
+
+.soc-entity-empty {
+    padding: 2.2rem 1.5rem;
+    text-align: center;
+    color: var(--soc-text-muted);
+    font-family: var(--soc-font-mono);
+    font-size: 0.82rem;
     background: #080c16;
     border: 1px dashed var(--soc-border);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 3rem 1.5rem;
-    text-align: center;
-    min-height: 340px;
+    justify-content: center;
 }
 
-.soc-graph-icon {
-    font-size: 1.75rem;
-    margin-bottom: 0.75rem;
-    color: var(--soc-accent-primary);
+.soc-entity-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin-top: 0.5rem;
 }
 
-.soc-graph-title {
+.soc-entity-cell {
+    background: #090e1c;
+    border: 1px solid var(--soc-border-subtle);
+    border-radius: 6px;
+    padding: 0.55rem 0.75rem;
+}
+
+.soc-entity-key {
     font-family: var(--soc-font-mono);
-    font-size: 1.05rem;
+    font-size: 0.68rem;
+    color: var(--soc-text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.soc-entity-val {
+    font-family: var(--soc-font-mono);
+    font-size: 0.82rem;
     font-weight: 600;
     color: #ffffff;
-    margin-bottom: 0.35rem;
+    word-break: break-all;
 }
 
-.soc-graph-msg {
-    font-size: 0.82rem;
-    color: var(--soc-text-secondary);
-    max-width: 440px;
-    line-height: 1.4;
-    margin-bottom: 1rem;
+.soc-legend-panel {
+    background: var(--soc-bg-surface);
+    border: 1px solid var(--soc-border);
+    border-radius: 8px;
+    padding: 1.1rem;
+    height: 100%;
 }
 
-.soc-graph-legend {
-    display: flex;
+.soc-legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
+    margin-top: 0.5rem;
 }
 
-.soc-legend-item {
+.soc-legend-item-box {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
     font-family: var(--soc-font-mono);
-    font-size: 0.7rem;
-    background: #0d1424;
+    font-size: 0.72rem;
+    color: var(--soc-text-primary);
+    background: #090e1c;
     border: 1px solid var(--soc-border-subtle);
-    color: var(--soc-text-secondary);
-    padding: 3px 8px;
     border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+}
+
+.soc-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.soc-legend-line {
+    width: 14px;
+    height: 3px;
+    display: inline-block;
+    border-radius: 1px;
 }
 
 /* ====================================================================
