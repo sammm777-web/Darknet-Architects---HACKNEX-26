@@ -1,5 +1,37 @@
+# Python Cache & Bytecode
 __pycache__/
+*.py[cod]
+*$py.class
 *.pyc
 *.pyo
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+env/
+
+# Environment variables & secrets
 .env
-.venv
+.env.*
+!.env.example
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Streamlit Local Runtime
+.streamlit/secrets.toml
+
+# Distribution & Build
+build/
+dist/
+*.egg-info/
