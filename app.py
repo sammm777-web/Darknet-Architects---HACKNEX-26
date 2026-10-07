@@ -2,12 +2,13 @@
 Cyber Threat Command Center.
 Main entrypoint and SOC dashboard orchestrator.
 
-FRONTEND FOUNDATION & DATASET INTEGRATION:
+FRONTEND & INTERACTIVE ATTACK GRAPH:
 - Session state initialization for data source & scenario switching
 - Custom log ingestion (CSV, JSON, LOG, TXT)
 - 3 One-click demo scenarios (Clean Logs, USB Exfiltration, Lateral Movement)
 - Dynamic SOC operational metric cards
-- Attack graph placeholder with dataset integration point
+- Interactive PyVis force-directed attack graph and network topology
+- System telemetry and status monitoring
 """
 
 import streamlit as st
@@ -18,7 +19,7 @@ from components.styles import inject_soc_styles
 from components.header import render_header
 from components.dataset_controls import render_datasource_controls
 from components.metric_cards import render_metric_cards
-from components.graph_placeholder import render_graph_placeholder
+from components.attack_graph import render_attack_graph
 from components.status_info import render_status_info
 
 def initialize_session_state():
@@ -73,8 +74,8 @@ def main():
 
     st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
 
-    # 7. Render Attack Graph & Network Topology Container (Prepared for PyVis Integration)
-    render_graph_placeholder(dataset=st.session_state.get("dataset"))
+    # 7. Render Interactive PyVis Attack Graph & Network Topology
+    render_attack_graph(graph_data=st.session_state.get("dataset"))
 
     st.markdown("<div style='height: 0.6rem;'></div>", unsafe_allow_html=True)
 

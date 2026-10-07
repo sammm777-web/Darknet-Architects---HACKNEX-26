@@ -1,10 +1,15 @@
 """
 Demo Scenarios Centralized Data Store.
-Provides standardized cybersecurity scenario data structures.
-Expandable for future Graph (PyVis) and Detection Engine integrations.
+Combines scenario metrics, metadata, and graph topology models.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
+from data.graph_demo_data import (
+    CLEAN_GRAPH,
+    USB_EXFILTRATION_GRAPH,
+    LATERAL_MOVEMENT_GRAPH,
+    get_graph_for_scenario
+)
 
 DEMO_SCENARIOS: Dict[str, Dict[str, Any]] = {
     "clean_logs": {
@@ -22,16 +27,8 @@ DEMO_SCENARIOS: Dict[str, Dict[str, Any]] = {
             "threat_level": "LOW"
         },
         "raw_logs_count": 1240,
-        "nodes": [
-            {"id": "usr-wkst-01", "label": "Workstation-01 (10.0.1.15)", "type": "host", "status": "safe"},
-            {"id": "usr-wkst-02", "label": "Workstation-02 (10.0.1.18)", "type": "host", "status": "safe"},
-            {"id": "dc-srv-01", "label": "Domain Controller (10.0.0.5)", "type": "server", "status": "safe"},
-            {"id": "mail-srv-01", "label": "Mail Gateway (10.0.0.8)", "type": "server", "status": "safe"}
-        ],
-        "edges": [
-            {"from": "usr-wkst-01", "to": "dc-srv-01", "label": "Kerberos TGS Request (Port 88)", "type": "benign"},
-            {"from": "usr-wkst-02", "to": "mail-srv-01", "label": "IMAPS / TLS (Port 993)", "type": "benign"}
-        ],
+        "nodes": CLEAN_GRAPH["nodes"],
+        "edges": CLEAN_GRAPH["edges"],
         "attack_chains": []
     },
     "usb_exfiltration": {
@@ -49,15 +46,8 @@ DEMO_SCENARIOS: Dict[str, Dict[str, Any]] = {
             "threat_level": "HIGH"
         },
         "raw_logs_count": 1486,
-        "nodes": [
-            {"id": "fin-wkst-04", "label": "Finance-PC (10.0.2.45)", "type": "host", "status": "compromised"},
-            {"id": "usb-dev-01", "label": "Removable USB Drive (E:)", "type": "storage", "status": "malicious"},
-            {"id": "file-srv-01", "label": "Financial Share (10.0.0.22)", "type": "server", "status": "targeted"}
-        ],
-        "edges": [
-            {"from": "fin-wkst-04", "to": "usb-dev-01", "label": "Mass Copy (24 docs, 850MB)", "type": "exfiltration"},
-            {"from": "fin-wkst-04", "to": "file-srv-01", "label": "SMB Volume Access (Confidential)", "type": "suspicious"}
-        ],
+        "nodes": USB_EXFILTRATION_GRAPH["nodes"],
+        "edges": USB_EXFILTRATION_GRAPH["edges"],
         "attack_chains": [
             {
                 "id": "CHAIN-01",
@@ -84,17 +74,8 @@ DEMO_SCENARIOS: Dict[str, Dict[str, Any]] = {
             "threat_level": "CRITICAL"
         },
         "raw_logs_count": 1942,
-        "nodes": [
-            {"id": "dmz-web-01", "label": "Web Server DMZ (192.168.10.12)", "type": "server", "status": "compromised"},
-            {"id": "adm-wkst-09", "label": "Admin Station (10.0.1.99)", "type": "host", "status": "compromised"},
-            {"id": "dc-srv-01", "label": "Primary DC-01 (10.0.0.5)", "type": "server", "status": "compromised"},
-            {"id": "c2-external", "label": "Attacker C2 (198.51.100.42)", "type": "external", "status": "malicious"}
-        ],
-        "edges": [
-            {"from": "c2-external", "to": "dmz-web-01", "label": "Reverse HTTPS Shell (Port 443)", "type": "c2"},
-            {"from": "dmz-web-01", "to": "adm-wkst-09", "label": "PsExec / SMB Lateral (Port 445)", "type": "lateral"},
-            {"from": "adm-wkst-09", "to": "dc-srv-01", "label": "Pass-the-Hash Kerberos (Port 88)", "type": "lateral"}
-        ],
+        "nodes": LATERAL_MOVEMENT_GRAPH["nodes"],
+        "edges": LATERAL_MOVEMENT_GRAPH["edges"],
         "attack_chains": [
             {"id": "CHAIN-01", "name": "Initial DMZ C2 Ingress", "ttp": "T1071.001", "status": "Established"},
             {"id": "CHAIN-02", "name": "Credential Access (LSASS)", "ttp": "T1003.001", "status": "Completed"},
