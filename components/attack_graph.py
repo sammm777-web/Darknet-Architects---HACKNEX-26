@@ -341,12 +341,14 @@ def create_pyvis_network(
     return net
 
 
+import textwrap
+
 def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> None:
     """
     Renders the SELECTED ENTITY inspection card.
     """
     if not selected_node:
-        st.markdown("""
+        empty_html = textwrap.dedent("""
         <div class="soc-entity-panel">
             <div class="soc-entity-header">
                 <span class="soc-entity-title">🔍 SELECTED ENTITY</span>
@@ -360,7 +362,8 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """).strip()
+        st.markdown(empty_html, unsafe_allow_html=True)
         return
 
     # Extract clean standardized metadata
@@ -404,7 +407,7 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
         </div>
         """
 
-    panel_html = f"""
+    panel_html = textwrap.dedent(f"""
     <div class="soc-entity-panel">
         <div class="soc-entity-header">
             <span class="soc-entity-title">🔍 SELECTED ENTITY: <strong style="color: #38bdf8;">{label}</strong></span>
@@ -451,7 +454,7 @@ def render_selected_entity_panel(selected_node: Optional[Dict[str, Any]]) -> Non
             {extra_cells_html}
         </div>
     </div>
-    """
+    """).strip()
     st.markdown(panel_html, unsafe_allow_html=True)
 
 
@@ -485,13 +488,12 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
         </div>
         """
 
-    legend_html = f"""
+    legend_html = textwrap.dedent(f"""
     <div class="soc-legend-panel">
         <div class="soc-entity-header">
             <span class="soc-entity-title">🗺️ GRAPH LEGEND</span>
             {attack_status_badge}
         </div>
-        
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.3rem;">
             Node Entity Types
         </div>
@@ -529,7 +531,6 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
                 <span>Infrastructure</span>
             </div>
         </div>
-
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; margin-top: 0.65rem; margin-bottom: 0.3rem;">
             Relationship Types
         </div>
@@ -556,10 +557,9 @@ def render_graph_legend_panel(attack_chains: Optional[List[Dict[str, Any]]] = No
                 <span style="font-size: 0.65rem; color: #f87171;">C2 / Pivot / Exfil</span>
             </div>
         </div>
-
         {chains_html}
     </div>
-    """
+    """).strip()
     st.markdown(legend_html, unsafe_allow_html=True)
 
 
@@ -593,12 +593,12 @@ def render_attack_graph(
     if graph_data:
         dataset_name = graph_data.get("name", graph_data.get("file_name", "Scenario Graph"))
 
-    header_html = f"""
+    header_html = textwrap.dedent(f"""
     <div class="soc-section-header">
         <h3 class="soc-section-title">🌐 ATTACK PATH / NETWORK TOPOLOGY</h3>
         <span class="soc-section-subtitle">Target: {dataset_name} &bull; [ Interactive PyVis Engine ]</span>
     </div>
-    """
+    """).strip()
     st.markdown(header_html, unsafe_allow_html=True)
 
     # 2. Empty Graph Handling
@@ -607,7 +607,7 @@ def render_attack_graph(
     attack_chains = graph_data.get("attack_chains", []) if graph_data else []
 
     if not graph_data or (not raw_nodes and not raw_edges):
-        st.markdown(f"""
+        empty_graph_html = textwrap.dedent("""
         <div class="soc-graph-container" style="min-height: 280px; justify-content: center; align-items: center;">
             <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #64748b; text-align: center;">
                 <span style="font-size: 1.5rem; display: block; margin-bottom: 0.5rem;">🔍</span>
@@ -617,7 +617,8 @@ def render_attack_graph(
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """).strip()
+        st.markdown(empty_graph_html, unsafe_allow_html=True)
         return
 
     # Validate selected node ID against current dataset
@@ -720,7 +721,7 @@ def render_attack_graph(
     visible_nodes_count = len(filtered_nodes)
     visible_edges_count = len(filtered_edges)
 
-    st.markdown(f"""
+    strip_html = textwrap.dedent(f"""
     <div style="background: #0c1322; border: 1px solid #1a263d; border-radius: 8px 8px 0 0; padding: 0.5rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-top: 0.5rem;">
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #94a3b8;">
             <span>TOPOLOGY: <strong style="color: #ffffff;">{dataset_name}</strong></span>
@@ -735,7 +736,8 @@ def render_attack_graph(
             ● INTERACTIVE CANVAS (Drag &bull; Zoom &bull; Pan &bull; Hover)
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """).strip()
+    st.markdown(strip_html, unsafe_allow_html=True)
 
     # 6. Render PyVis Canvas
     try:
